@@ -2,11 +2,12 @@ angular
 	.module('ngDatabase', ['ngCordova'])
 	.factory('ngdb', ngdb);
 
-ngdb.$inject = ['$q', '$cordovaSQLite', 'NGDB_CONFIG'];
+ngdb.$inject = ['$q', '$cordovaSQLite'];
 
-function ngdb($q, $cordovaSQLite, DB_CONFIG) {
+function ngdb($q, $cordovaSQLite) {
 	var self = this;
 	var _db = null;
+	var _dbSchema = null;
 	var _currentTable = null;
 	var _currentBy = null;
 	var _currentOrder = null;
@@ -42,7 +43,7 @@ function ngdb($q, $cordovaSQLite, DB_CONFIG) {
 
 	var _transformData = function(data) {
 		var formated = {};
-		var table = DB_CONFIG[_currentTable];
+		var table = _dbSchema[_currentTable];
 
 		_followObject(data, function(fieldValue, fieldName) {
 			if (table[fieldName]) {
@@ -65,7 +66,6 @@ function ngdb($q, $cordovaSQLite, DB_CONFIG) {
 		self.query(query).then(function(result) {
 			deferred.resolve(result);
 		}, function(error) {
-			throw new Error(error['message'] + "\n" + query);
 			deferred.reject(error);
 		});
 
@@ -91,10 +91,29 @@ function ngdb($q, $cordovaSQLite, DB_CONFIG) {
 		return (query);
 	};
 
+	var _errorHandler = function(message) {
+		var test = new Error();
+
+		throw(new Error("NGDB Error : " + message, "", ""));
+	};
+
+	var _dbConnexion = function() {
+		var db = null;
+
+		if (window.cordova) {
+   			db = $cordovaSQLite.openDB('ngdb.db');
+        }
+        else {
+			db = window.openDatabase('ngdb.db', '1', 'ngdb.db', 1024 * 1024 * 100);
+        }
+
+        return (db);
+	};
+
 	/*
 	** USER SETTER METHODS
 	*/
-	self.setTable = function(table) {
+	self.setRepo = function(table) {
 		_currentTable = table;
 
 		return (self);
@@ -125,19 +144,27 @@ function ngdb($q, $cordovaSQLite, DB_CONFIG) {
 	/*
 	** INIT USER METHOD
 	*/
-    self.init = function() {
-        if (window.cordova) {
-   			_db = $cordovaSQLite.openDB('ngdb.db');
-        }
-        else {
-			_db = window.openDatabase('ngdb.db', '1', 'ngdb.db', 1024 * 1024 * 100);
-        }
+    self.init = function(dbSchema) {
+    	var types = {
+    		ID: 		'integer primary key',
+    		STRING: 	'text',
+    		NUMBER: 	'integer',
+    		BOOLEAN: 	'boolean',
+    		OBJECT: 	'text',
+    		ARRAY: 		'text',
+    		DATE: 		'datetime'
+    	};
 
-        _followObject(DB_CONFIG, function(table, tableName) {
+    	_dbSchema = dbSchema;
+    	_db = _dbConnexion();
+        _followObject(_dbSchema, function(table, tableName) {
             var columns = [];
 
             _followObject(table, function(columnType, columnName) {
-                columns.push(columnName + ' ' + columnType);
+            	if (!types[columnType]) {
+            		_errorHandler("Unable to find '"+ columnType +"' datatype.");
+            	}
+                columns.push(columnName + ' ' + types[columnType]);
             });
             self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')');
         });
