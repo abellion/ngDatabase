@@ -1,0 +1,15 @@
+{
+  "name": "ng-database",
+  "version": "1.0.0",
+  "description": "A simple and powerful local storage solution for your Ionic apps.",
+  "main": "ngdb.js",
+  "keywords": [
+    "ionic",
+    "sqlite",
+    "ngDatabase"
+  ],
+  "authors": [
+    "Antoine Bellion"
+  ],
+  "license": "MIT"
+}
