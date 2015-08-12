@@ -1,14 +1,14 @@
 # ngDatabase
-ngDatabase is a light, very easy to use and powerful local storage solution for your Ionic apps.
+ngDatabase is a light, very easy to use and powerful local __database__ solution for your __Ionic apps__.
 You don't need to have a back-end or SQL background to understand this service.
 
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
-Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://ionicframework.com/).
 
-Note that if you follow this documention from top to bottom you'll be able to get started with ngDatabase in less than 15 minutes !
+__Note : this service will sonn be available also for non Ionic project. Stay tuned !__
 
 # Quick links
 
+* [Get started] ()
 * [Installation] (#installation)
 * [Initialize] (#initialize-ngdatabase)
 * [Create Repositories] (#create-repositories)
@@ -19,6 +19,19 @@ Note that if you follow this documention from top to bottom you'll be able to ge
 * [Update data] (#update-data)
 * [Set conditions] (#set-conditions)
 * [Global exemple] (#global-example)
+
+# Get started
+Get started in 4 steps by following this guideline.
+
+* The very first thing you have to do is install ngDatabase : [ngDatabase installation] (#installation)
+
+* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to initialize and create repositories : [Initialize] (#initialize-ngdatabase), [Create Repositories] (#create-repositories)
+
+* Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get-repositories)
+
+* The previous method give you an new instance of a working repository. Now you can make what you want thanks to the 4 following methods : [Add data] (#add-data), [Delete data] (#delete-data), [Get data] (#get-data), [Update data] (#update-data)
+
+* As you can observe we can't do a lot only with these 4 methods. It's the combination between them and 3 others which make the magic. These 3 others are _setBy(), setOrder()_ and _setLimit()_ which define by what criterion the data will be get, add, delete, ... Check it : [Set conditions] (#set-conditions)
 
 # Installation
 ### ngCordova and cordovaSQLite
@@ -121,7 +134,7 @@ ngdb getRepository(string repositoryName)
 This method allow you to make operations in the specified _repositoryName_.
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -147,7 +160,7 @@ __Return__ promise containing
 
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -181,7 +194,7 @@ __Return__ promise containing
 
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -209,7 +222,7 @@ __Return__ promise containing
 
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -238,7 +251,7 @@ __Return__ promise containing
 
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -277,7 +290,7 @@ They have an influence on the result you'll obtain. The arguments they take cont
 __Return__ a _ngdb_ instance.
 ##### Exemple
 ```javascript
-myApp.controller(function(ngdb) {
+myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
@@ -313,7 +326,7 @@ myApp.controller(function(ngdb) {
 
 # Global example
 ```javascript
-myApp.controller(function($scope, ngdb){
+myApp.controller('myCtrl', function($scope, ngdb){
   
   var usersRepository = ngdb.getRepository('users');
   
