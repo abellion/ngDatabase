@@ -5,6 +5,8 @@ You don't need to have a back-end or SQL background to understand this service.
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
 Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://ionicframework.com/).
 
+Note that if you follow this documention from top to bottom you'll be able to get started with ngDatabase in less than 15 minutes !
+
 # Index
 
 * [Installation] (#installation)
@@ -265,7 +267,7 @@ ngdb setLimit(int from, int to)
 ##### Description
 These methods must be used before call the _get(), getOne(), add(), update()_ and _delete()_ methods.
 
-They have an influence on the result you'll obtain. They take in argument an object containing the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ methods will make operations.
+They have an influence on the result you'll obtain. The arguments they take contain the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ methods will make operations.
 
 * _setBy_ : take an object of conditions -> {fieldName: 'toBeEqual', ...}
 * _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
@@ -305,5 +307,51 @@ myApp.controller(function(ngdb) {
   /*
   ** Obviously work with get(), getOne(), update(), ...
   */
+});
+```
+
+# Global example
+```javascript
+myApp.controller(function($scope, ngdb){
+  
+  var usersRepository = ngdb.getRepository('users');
+  
+  //Add new user
+  var userAdded = usersRepository.add({
+    name: 'John Doe',
+    bord: new Date().getTime()
+  });
+  
+  userAdded.then(function(result){
+    var userId = result.insertId;
+  });
+  
+  //Get a specific user (assume that we have got the user id) and send it to the view
+  var user = usersRepository.setBy({id: userId}).getOne();
+  
+  user.then(function(result){
+    $scope.user = result;
+  });
+  
+  //Update user (assume that the user has updated his data in the view)
+  var update = usersRepository.setBy({id: userID}).update($scope.user);
+  
+  update.then(function(result) {
+    //Do what you want
+  });
+  
+  //Delete user
+  var deleted = usersRepository.setBy({id: userID}).delete();
+  
+  update.then(function(result) {
+    //Do what you want
+  });
+  
+  //Get all users sorted by name in descendent order
+  var users = usersRepository.setOrder(name: 'DESC').get();
+  
+  users.then(function(result){
+    $scope.users = result;
+  });
 });
 ```
