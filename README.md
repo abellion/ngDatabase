@@ -5,7 +5,7 @@ You don't need to have a back-end or SQL background to understand this service.
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
 Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://ionicframework.com/).
 
-## Installation
+# Installation
 ### ngCordova and cordovaSQLite
 First, install ndCordova to your project (http://ngcordova.com/docs/install/) :
 ```shell
@@ -36,7 +36,7 @@ Then include ngDatabase dependency :
 angular.module('myApp', ['ngDatabase'])
 ```
 
-## Usage
+# Usage
 
 ##### Important note : all of ngDatabase method must be used when the _deviceready_ event fired.
 
@@ -118,11 +118,11 @@ myApp.controller(function(ngdb) {
 ### Add data
 ##### Prototype
 ```javascript
-resource add (object data)
+object add (object data)
 ```
 ##### Description
 Add new datas in repository.
-Return promise witch return an object containing information about the insertion.
+__Return__ promise witch return an object containing information about the insertion.
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -142,5 +142,29 @@ myApp.controller(function(ngdb) {
   usersRepository.add(userToAdd);
   picturesRepository.add(pictureToAdd);
 
+});
+```
+
+### Get data
+##### Prototype
+```javascript
+object get()
+object getOne()
+```
+##### Description
+Get data from repository.
+__Return__ promise containing a result object.
+##### Exemple
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  var usersData = usersRepository.get();
+  var picturesData = picturesRepository.get();
+
+  var firstUserData = usersRepository.getOne();
+  // ...
 });
 ```
