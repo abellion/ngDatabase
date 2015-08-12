@@ -5,6 +5,10 @@ You don't need to have a back-end or SQL background to understand this service.
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
 Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://ionicframework.com/).
 
+# Index
+
+* [Installation] (#installation)
+
 # Installation
 ### ngCordova and cordovaSQLite
 First, install ndCordova to your project (http://ngcordova.com/docs/install/) :
