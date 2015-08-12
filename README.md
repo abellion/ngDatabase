@@ -7,7 +7,7 @@ A very simple and powerful local storage solution for your Ionic apps.
 * Ionic
 * cordovaSQLite
 
-### Dependencies (ngCordova and cordovaSQLite)
+### ngCordova and cordovaSQLite
 First, install ndCordova to your project (http://ngcordova.com/docs/install/) :
 ```
 bower install ngCordova
