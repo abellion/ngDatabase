@@ -320,7 +320,7 @@ myApp.controller(function($scope, ngdb){
   //Add new user
   var userAdded = usersRepository.add({
     name: 'John Doe',
-    bord: new Date().getTime()
+    born: new Date().getTime()
   });
   
   userAdded.then(function(result){
