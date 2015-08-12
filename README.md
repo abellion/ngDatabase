@@ -103,7 +103,7 @@ __Note that these types are important for the internal working.__
 ngdb getRepository(string repositoryName)
 ```
 ##### Description
-This method allow to make operations in the specified _repositoryName_.
+This method allow you to make operations in the specified _repositoryName_.
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -244,9 +244,42 @@ myApp.controller(function(ngdb) {
 ```javascript
 ngdb setBy(object conditions)
 ngdb setOrder(object conditions)
-ngdb setLimit(object conditions)
+ngdb setLimit(int from, int to)
 ```
 ##### Description
-...
+These methods must be used before call the _get(), getOne(), add(), update()_ and _delete()_ methods.
+
+They have an influence on the result you'll obtain. They take in argument an object containing the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ will make operations.
+
+__Return__ an _ngdb_ instance.
 ##### Exemple
-...
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  //Get an user by his ID
+  var user = usersRepository
+  .setBy({id: 5})
+  .getOne();
+  
+  //Get all users who are called 'John' and born on the specified date
+  var users = usersRepository
+  .setBy({name: 'John', born: new Date().GetTime()})
+  .get();
+  
+  //Same as before except that the results are sorted in descendent order by name
+  var users = usersRepository
+  .setBy({name: 'John', born: new Date().GetTime()})
+  .setOrder({name: 'DESC'})
+  .get();
+  
+  //Same as before except that we get only the 10 first results
+  var users = usersRepository
+  .setBy({name: 'John', born: new Date().GetTime()})
+  .setOrder({name: 'DESC'})
+  .setLimit(0, 10)
+  .get();
+});
+```
