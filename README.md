@@ -4,7 +4,7 @@ You don't need to have a back-end or SQL background to understand this service.
 
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
 
-__Note : this service will sonn be available also for non Ionic project. Stay tuned !__
+__Note : this service will soon be available also for non Ionic project. Stay tuned !__
 
 # Quick links
 
