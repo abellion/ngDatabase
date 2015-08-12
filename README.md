@@ -128,7 +128,8 @@ Note that you do not have to convert your data. Just let objects as objects, num
 
 __Return__ promise containing
 
-  -> an object with insertion informations (the ID particularly)
+* An object with the insertion informations (the ID particularly)
+
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -161,7 +162,8 @@ Delete entries in the repository.
 
 __Return__ promise containing
 
-  -> an object with informations about the deletion
+* An object with the informations about the deletion
+
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -188,7 +190,8 @@ All your data are gived back to the correct type (objects as objects, numbers as
 
 __Return__ promise containing
 
-  -> an object with the data
+* An object with the data
+
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -216,7 +219,8 @@ Update the specified _data_.
 
 __Return__ promise containing
 
-  -> an object with informations about the update
+* An object with informations about the update
+
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -255,7 +259,7 @@ They have an influence on the result you'll obtain. They take in argument an obj
 * _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
 * _setLimit_ : take two integer witch correspond to the interval
 
-__Return__ an _ngdb_ instance.
+__Return__ a _ngdb_ instance.
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
