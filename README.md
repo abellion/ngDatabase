@@ -1,5 +1,5 @@
 # ngDatabase
-ngDatabase is a lite, very easy to use and powerful local storage solution for your Ionic apps.
+ngDatabase is a light, very easy to use and powerful local storage solution for your Ionic apps.
 You don't need to have a back-end or SQL background to understand this service.
 
 With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
