@@ -114,16 +114,15 @@ var NGDB_SCHEMA = {
 };
 ```
 ##### Typing
-ngDatabase has a human friendly typing syntax. ngDatabase just make a conversion in correct SQLite types.
+For each repository field you have to indicate the value type.
 
-__Note that these types are important for the internal working.__
-* __ID__        : set an _integer primary key_
-* __STRING__    : set a _text_
-* __NUMBER__    : set an _integer_
-* __BOOLEAN__   : set a _boolean_
-* __OBJECT__    : set a _text_
-* __ARRAY__     : set a _text_
-* __DATE__      : set a _datetime_
+* __ID__        : special integer type which is incremented at each insertion 
+* __STRING__    : can store string such as text
+* __NUMBER__    : an integer or floating number
+* __BOOLEAN__   : _true_ or _false_ values (same as 1 or 0)
+* __OBJECT__    : a javascript object
+* __ARRAY__     : a javascript array
+* __DATE__      : a date
 
 ### Get repositories
 ##### Prototype
