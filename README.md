@@ -272,7 +272,7 @@ They have an influence on the result you'll obtain. The arguments they take cont
 
 * _setBy_ : take an object of conditions -> {fieldName: 'toBeEqual', ...}
 * _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
-* _setLimit_ : take two integer witch represent the interval
+* _setLimit_ : take two integer which represent the interval
 
 __Return__ a _ngdb_ instance.
 ##### Exemple
