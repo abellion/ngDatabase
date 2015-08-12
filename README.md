@@ -224,18 +224,18 @@ myApp.controller(function(ngdb) {
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
   
-  var userToUpdate = {
+  var usersToUpdate = {
     pictures_id: 6,
     name: 'John',
     born: born: new Date().getTime()
   };
-  var pictureToUpdate = {
+  var picturesToUpdate = {
     pictures: {}
   };
   
-  //Get all users and pictures data
-  var usersData = usersRepository.get();
-  var picturesData = picturesRepository.get();
+  //Update all users and pictures data
+  var usersUpdated = usersRepository.update(usersToUpdate);
+  var picturesUpdated = picturesRepository.update(picturesToUpdate);
 });
 ```
 
