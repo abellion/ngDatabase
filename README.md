@@ -7,7 +7,7 @@ Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://i
 
 Note that if you follow this documention from top to bottom you'll be able to get started with ngDatabase in less than 15 minutes !
 
-# Index
+# Quick links
 
 * [Installation] (#installation)
 * [Initialize] (#initialize-ngdatabase)
@@ -18,6 +18,7 @@ Note that if you follow this documention from top to bottom you'll be able to ge
 * [Get data] (#get-data)
 * [Update data] (#update-data)
 * [Set conditions] (#set-conditions)
+* [Global exemple] (#global-example)
 
 # Installation
 ### ngCordova and cordovaSQLite
