@@ -8,6 +8,14 @@ Work perfectly on desktop and mobile devices powered by Ionic Framwork (http://i
 # Index
 
 * [Installation] (#installation)
+* [Initialize] (#initialize-ngdatabase)
+* [Create Repositories] (#create-repositories)
+* [Get Repositories] (#get-repositories)
+* [Add data] (#add-data)
+* [Delete data] (#delete-data)
+* [Get data] (#get-data)
+* [Update data] (#update-data)
+* [Set conditions] (#set-conditions)
 
 # Installation
 ### ngCordova and cordovaSQLite
