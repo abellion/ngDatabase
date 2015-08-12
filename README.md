@@ -50,7 +50,7 @@ ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SC
 ##### Exemple
 Don't forget to include _ngdb_ dependency in the angular _run()_ method (or where you want) :
 ```javascript
-app.run(function($ionicPlatform, ngdb) {
+myApp.run(function($ionicPlatform, ngdb) {
   var NGDB_SCHEMA = {
     //...
   };
@@ -100,4 +100,47 @@ __Note that these types are important for the internal working.__
 ##### Prototype
 ```javascript
 resource getRepository(string repositoryName)
+```
+##### Description
+This method allow to make operations in the specified _repositoryName_.
+##### Exemple
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  //Make all your operations.
+
+});
+```
+
+### Add data
+##### Prototype
+```javascript
+resource add (object data)
+```
+##### Description
+Add new datas in repository.
+Return promise witch return an object containing information about the insertion.
+##### Exemple
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  var userToAdd = {
+    pictures_id: 5,
+    name: 'Jack',
+    born: new Date().getTime()
+  };
+  var pictureToAdd = {
+    pictures: {}
+  };
+  
+  usersRepository.add(userToAdd);
+  picturesRepository.add(pictureToAdd);
+
+});
 ```
