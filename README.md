@@ -67,6 +67,7 @@ myApp.run(function($ionicPlatform, ngdb) {
 ```javascript
 object NGDB_SCHEMA
 ```
+##### Description
 Repositories are the equivalent of tables in SQL. In other words, it's where and how your data are stored.
 ##### Exemple
 For exemple, if you have an user management in your app, your repositories looks like that :
