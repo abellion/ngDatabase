@@ -349,7 +349,7 @@ myApp.controller(function($scope, ngdb){
   });
   
   //Get all users sorted by name in descendent order
-  var users = usersRepository.setOrder(name: 'DESC').get();
+  var users = usersRepository.setOrder({name: 'DESC'}).get();
   
   users.then(function(result){
     $scope.users = result;
