@@ -42,7 +42,7 @@ cordova plugin add https://github.com/litehelpers/Cordova-sqlite-storage.git
 * __Bower__ : bower install ng-database
 * __NPM__ : npm install ng-database
 
-Include the ng-database js file in your ptoject :
+Include the ng-database js file in your project :
 ```html
 <script src="path/to/your/lib/ng-database/src/ng-database.min.js"></script>
 ```
@@ -272,7 +272,7 @@ They have an influence on the result you'll obtain. The arguments they take cont
 
 * _setBy_ : take an object of conditions -> {fieldName: 'toBeEqual', ...}
 * _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
-* _setLimit_ : take two integer witch correspond to the interval
+* _setLimit_ : take two integer witch represent the interval
 
 __Return__ a _ngdb_ instance.
 ##### Exemple
@@ -327,7 +327,7 @@ myApp.controller(function($scope, ngdb){
     var userId = result.insertId;
   });
   
-  //Get a specific user (assume that we have got the user id) and send it to the view
+  //Get a specific user data and send them into the view (assume that we have got the user id)
   var user = usersRepository.setBy({id: userId}).getOne();
   
   user.then(function(result){
