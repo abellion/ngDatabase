@@ -41,10 +41,10 @@ bower install ngCordova
 ```
 Don't forget to include the ng-cordova.js file and add ngCordova in your app dependencies :
 ```html
-<script src="lib/ngCordova/dist/ng-cordova.js"></script>
+<script src="path/to/your/lib/ngCordova/dist/ng-cordova.js"></script>
 ```
 ```javascript
-angular.module('myApp', ['ngCordova'])
+angular.module('myApp', ['ngCordova']);
 ```
 
 Then, add the cordovaSQLite plugin :
@@ -61,7 +61,7 @@ Include the ng-database js file in your project :
 ```
 Then include ngDatabase dependency :
 ```javascript
-angular.module('myApp', ['ngDatabase'])
+angular.module('myApp', ['ngDatabase']);
 ```
 
 # Usage
@@ -74,7 +74,7 @@ angular.module('myApp', ['ngDatabase'])
 void init (object NGDB_SCHEMA)
 ```
 ##### Description
-ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SCHEMA object (see below).
+ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SCHEMA object (see [Create Repositories] (#create-repositories)).
 ##### Exemple
 Don't forget to include _ngdb_ dependency in the angular _run()_ method (or where you want) :
 ```javascript
