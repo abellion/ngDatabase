@@ -100,7 +100,7 @@ __Note that these types are important for the internal working.__
 ### Get repositories
 ##### Prototype
 ```javascript
-resource getRepository(string repositoryName)
+ngdb getRepository(string repositoryName)
 ```
 ##### Description
 This method allow to make operations in the specified _repositoryName_.
@@ -119,7 +119,7 @@ myApp.controller(function(ngdb) {
 ### Add data
 ##### Prototype
 ```javascript
-object add (object data)
+promise add (object data)
 ```
 ##### Description
 Add new datas in repository.
@@ -127,6 +127,7 @@ Add new datas in repository.
 Note that you do not have to convert your data. Just let objects as objects, numbers as numbers, strings as strings, ...
 
 __Return__ promise containing
+
   -> an object with insertion informations (the ID particularly)
 ##### Exemple
 ```javascript
@@ -153,14 +154,32 @@ myApp.controller(function(ngdb) {
 ### Delete Data
 ##### Prototype
 ```javascript
+promise delete()
+```
+##### Description
+Delete entries in the repository.
 
+__Return__ promise containing
+
+  -> an object with informations about the deletion
+##### Exemple
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  //Delete all users and pictures data
+  var usersData = usersRepository.delete();
+  var picturesData = picturesRepository.delete();
+});
 ```
 
 ### Get data
-##### Prototype
+##### Prototypes
 ```javascript
-object get()
-object getOne()
+promise get()
+promise getOne()
 ```
 ##### Description
 Get data from repository.
@@ -168,6 +187,7 @@ Get data from repository.
 All your data are gived back to the correct type (objects as objects, numbers as numbers, ...)
 
 __Return__ promise containing
+
   -> an object with the data
 ##### Exemple
 ```javascript
@@ -185,3 +205,48 @@ myApp.controller(function(ngdb) {
   var firstPictureData = pictureRepository.getOne();
 });
 ```
+
+### Update data
+##### Prototype
+```javascript
+promise update(object data)
+```
+##### Description
+Update the specified _data_.
+
+__Return__ promise containing
+
+  -> an object with informations about the update
+##### Exemple
+```javascript
+myApp.controller(function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+  var picturesRepository = ngdb.getRepository('pictures');
+  
+  var userToUpdate = {
+    pictures_id: 6,
+    name: 'John',
+    born: born: new Date().getTime()
+  };
+  var pictureToUpdate = {
+    pictures: {}
+  };
+  
+  //Get all users and pictures data
+  var usersData = usersRepository.get();
+  var picturesData = picturesRepository.get();
+});
+```
+
+### Set conditions
+##### Prototypes
+```javascript
+ngdb setBy(object conditions)
+ngdb setOrder(object conditions)
+ngdb setLimit(object conditions)
+```
+##### Description
+...
+##### Exemple
+...
