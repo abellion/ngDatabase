@@ -283,8 +283,8 @@ These methods must be used before call the _get(), getOne(), add(), update()_ an
 
 They have an influence on the result you'll obtain. The arguments they take contain the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ methods will make operations.
 
-* _setBy_ : take an object of conditions -> {fieldName: 'toBeEqual', ...}
-* _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
+* _setBy_ : take an object -> {fieldName: 'toBeEqual', ...}
+* _setOrder_ : take an object -> {fieldName: 'ASC', fieldName: 'DESC'}
 * _setLimit_ : take two integer which represent the interval
 
 __Return__ a _ngdb_ instance.
