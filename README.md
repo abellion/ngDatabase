@@ -123,7 +123,11 @@ object add (object data)
 ```
 ##### Description
 Add new datas in repository.
-__Return__ promise witch return an object containing information about the insertion.
+
+Note that you do not have to convert your data. Just let objects as objects, numbers as numbers, strings as strings, ...
+
+__Return__ promise containing
+  -> an object with insertion informations (the ID particularly)
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -146,6 +150,12 @@ myApp.controller(function(ngdb) {
 });
 ```
 
+### Delete Data
+##### Prototype
+```javascript
+
+```
+
 ### Get data
 ##### Prototype
 ```javascript
@@ -154,7 +164,11 @@ object getOne()
 ```
 ##### Description
 Get data from repository.
-__Return__ promise containing a result object.
+
+All your data are gived back to the correct type (objects as objects, numbers as numbers, ...)
+
+__Return__ promise containing
+  -> an object with the data
 ##### Exemple
 ```javascript
 myApp.controller(function(ngdb) {
@@ -162,10 +176,12 @@ myApp.controller(function(ngdb) {
   var usersRepository = ngdb.getRepository('users');
   var picturesRepository = ngdb.getRepository('pictures');
   
+  //Get all users and pictures data
   var usersData = usersRepository.get();
   var picturesData = picturesRepository.get();
 
+  //Get the first user and picture data
   var firstUserData = usersRepository.getOne();
-  // ...
+  var firstPictureData = pictureRepository.getOne();
 });
 ```
