@@ -249,7 +249,11 @@ ngdb setLimit(int from, int to)
 ##### Description
 These methods must be used before call the _get(), getOne(), add(), update()_ and _delete()_ methods.
 
-They have an influence on the result you'll obtain. They take in argument an object containing the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ will make operations.
+They have an influence on the result you'll obtain. They take in argument an object containing the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ methods will make operations.
+
+* _setBy_ : take an object of conditions -> {fieldName: 'toBeEqual', ...}
+* _setOrder_ : take an object of conditions -> {fieldName: 'ASC', fieldName: 'DESC'}
+* _setLimit_ : take two integer witch correspond to the interval
 
 __Return__ an _ngdb_ instance.
 ##### Exemple
@@ -281,5 +285,9 @@ myApp.controller(function(ngdb) {
   .setOrder({name: 'DESC'})
   .setLimit(0, 10)
   .get();
+  
+  /*
+  ** Obviously work with get(), getOne(), update(), ...
+  */
 });
 ```
