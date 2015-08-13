@@ -47,7 +47,7 @@ function ngdb($q, $cordovaSQLite) {
 
             _ngdbUtils._followObject(table, function(columnType, columnName) {
             	if (!types[columnType]) {
-            		_errorHandler("Unable to find '"+ columnType +"' datatype.");
+            		_ngdbUtils._errorHandler("Unable to find '"+ columnType +"' datatype.");
             	}
                 columns.push(columnName + ' ' + types[columnType]);
             });
