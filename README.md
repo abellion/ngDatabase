@@ -2,7 +2,7 @@
 ngDatabase is a light, very easy to use and powerful local __database__ solution for your __Ionic apps__.
 You don't need to have a back-end or SQL background to understand this service.
 
-With ngDatabase you can store any data as you want (text, number, date, object, ...) thanks to human-friendly methods names.
+With ngDatabase you can store any data you want (text, number, date, object, ...) thanks to human-friendly methods names.
 
 __Note : this service will soon be available also for non Ionic project. Stay tuned !__
 
@@ -18,6 +18,7 @@ __Note : this service will soon be available also for non Ionic project. Stay tu
 * [Get data] (#get-data)
 * [Update data] (#update-data)
 * [Set conditions] (#set-conditions)
+* [Native SQLite syntax] (#native-sqlite-syntax)
 * [Global exemple] (#global-example)
 
 # Get started
@@ -52,8 +53,10 @@ Then, add the cordovaSQLite plugin :
 cordova plugin add https://github.com/litehelpers/Cordova-sqlite-storage.git
 ```
 ### ngDatabase
-* __Bower__ : bower install ng-database
-* __NPM__ : npm install ng-database
+```shell
+bower install ng-database #bower
+npm install ng-database #NPM
+```
 
 Include the ng-database js file in your project :
 ```html
@@ -146,7 +149,7 @@ myApp.controller('myCtrl', function(ngdb) {
 ### Add data
 ##### Prototype
 ```javascript
-promise add (object data)
+promise add(object data)
 ```
 ##### Description
 Add new datas in repository.
@@ -320,6 +323,32 @@ myApp.controller('myCtrl', function(ngdb) {
   /*
   ** Obviously work with get(), getOne(), update(), ...
   */
+});
+```
+
+### Native SQLite syntax
+##### Prototypes
+```javascript
+promise query(string query, array bindings)
+object fetchAll(object SQLiteResult)
+object fetch(object SQLiteResult)
+```
+##### Description
+NGDatabase also allow you to use SQLite as native syntax.
+* query() : make an SQLite Query 
+* fetchAll() : fetch all SQLite Query result 
+* fetch() : fetch one SQLite Query result
+##### Exemple
+```javascript
+myApp.controller('myCtrl', function(ngdb) {
+
+  var query = "SELECT * FROM users WEHRE name = ?";
+  var bindings = ['John Doe'];
+  var result = ngdb.query(query, bindings);
+  
+  result.then(function(result) {
+    result = ngdb.fetchAll(result);
+  });
 });
 ```
 
