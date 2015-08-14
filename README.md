@@ -338,6 +338,7 @@ NGDatabase also allow you to use SQLite as native syntax.
 * query() : make an SQLite Query 
 * fetchAll() : fetch all SQLite Query result 
 * fetch() : fetch one SQLite Query result
+
 ##### Exemple
 
 ```javascript
