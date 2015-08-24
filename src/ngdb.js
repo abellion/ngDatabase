@@ -30,6 +30,12 @@ function ngdb($q, $cordovaSQLite) {
 	** INIT USER METHOD
 	*/
     self.init = function(dbSchema) {
+    	_db = _dbConnexion();
+
+        return (self.createRepositories(dbSchema));
+    };
+
+    self.createRepositories = function(dbSchema) {
     	var types = {
     		ID: 		'integer primary key',
     		STRING: 	'text',
@@ -39,20 +45,22 @@ function ngdb($q, $cordovaSQLite) {
     		ARRAY: 		'text',
     		DATE: 		'datetime'
     	};
+    	_dbSchema = (_dbSchema) ? _dbSchema : {};
 
-    	_dbSchema = dbSchema;
-    	_db = _dbConnexion();
-        _ngdbUtils._followObject(_dbSchema, function(table, tableName) {
+    	_ngdbUtils._followObject(dbSchema, function(table, tableName) {
             var columns = [];
 
             _ngdbUtils._followObject(table, function(columnType, columnName) {
             	if (!types[columnType]) {
-            		_ngdbUtils._errorHandler("Unable to find '"+ columnType +"' datatype.");
+            		_errorHandler("Unable to find '"+ columnType +"' datatype.");
             	}
+            	_dbSchema[tableName] = table;
                 columns.push(columnName + ' ' + types[columnType]);
             });
             self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')');
         });
+
+    	return (_dbSchema);
     };
 
 	/*
@@ -97,7 +105,7 @@ function ngdb($q, $cordovaSQLite) {
     };
 
     self.fetch = function(result) {
-        return (result.rows.item(0));
+        return ((result.rows.length > 0) ? result.rows.item(0) : null);
     };
 
 	return (self);
@@ -110,6 +118,7 @@ function ngdbRepository(repository, ngdb) {
 	var _currentOrder = null;
 	var _currentBy = null;
 	var _currentLimit = [];
+	var _bindings = [];
 	/* FUNCTION ATTRIBUTS */
 	var _ngdb = ngdb;
 	var _ngdbUtils = new ngdbUtils();
@@ -121,6 +130,7 @@ function ngdbRepository(repository, ngdb) {
 		_currentBy = null;
 		_currentOrder = null;
 		_currentLimit = [];
+		_bindings = [];
 	};
 
 	var _constructSubParams = function(query) {
@@ -142,9 +152,10 @@ function ngdbRepository(repository, ngdb) {
 	*/
 	self.setBy = function(by) {
 		var by_formated = [];
-
 		_ngdbUtils._followObject(by, function(val, key) {
-			by_formated.push(key + " = '" + val + "'");
+			//by_formated.push(key + " = '" + val + "'");
+			by_formated.push(key + " = ?");
+			_bindings.push(val);
 		})
 		_currentBy = by_formated.join(' and ');
 
@@ -177,7 +188,7 @@ function ngdbRepository(repository, ngdb) {
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query)
+			_ngdb.query(query, _bindings)
 			.then(function(result) {
 				var fetched = _ngdb.fetchAll(result);
 
@@ -195,12 +206,12 @@ function ngdbRepository(repository, ngdb) {
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query)
+			_ngdb.query(query, _bindings)
 			.then(function(result) {
 				var fetched = _ngdb.fetch(result);
 				fetched = _ngdbUtils._transformData(fetched, _ngdb.getDbSchema()[_currentRepo]);
 
-				return (_resetParams(), fetched);
+				return (_resetParams(), (Object.keys(fetched).length) ? fetched : null);
 			})
 		);
 	};
@@ -229,14 +240,24 @@ function ngdbRepository(repository, ngdb) {
 		var query = "UPDATE " + _currentRepo + " SET " + data_formated.join(", ");
 		query = _constructSubParams(query);
 
-		return (_resetParams(), _ngdb.query(query));
+		return (
+			_ngdb.query(query, _bindings)
+			.then(function(result) {
+				return (_resetParams(), result);
+			})
+		);
 	};
 
 	self.delete = function() {
 		var query= "DELETE FROM " + _currentRepo;
 		query = _constructSubParams(query);
 
-		return (_resetParams(), _ngdb.query(query));
+		return (
+			_ngdb.query(query, _bindings)
+			.then(function(result){
+				return (_resetParams(), result);
+			})
+		);
 	};
 }
 
@@ -264,7 +285,7 @@ function ngdbUtils() {
 	** PROTECTED METHODS
 	*/
 	self._followObject = function(obj, callback) {
-		var keys = Object.keys(obj);
+		var keys = (obj === undefined || obj === null) ? [] : Object.keys(obj);
 
 		keys.forEach(function(key) {
 			var val = obj[key];
