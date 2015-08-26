@@ -36,6 +36,7 @@ function ngdb($q, $cordovaSQLite) {
     };
 
     self.createRepositories = function(dbSchema) {
+    	var deferred = $q.defer();
     	var types = {
     		ID: 		'integer primary key',
     		STRING: 	'text',
@@ -52,15 +53,16 @@ function ngdb($q, $cordovaSQLite) {
 
             _ngdbUtils._followObject(table, function(columnType, columnName) {
             	if (!types[columnType]) {
+            		deferred.reject("Unable to find '"+ columnType +"' datatype.");
             		_errorHandler("Unable to find '"+ columnType +"' datatype.");
             	}
             	_dbSchema[tableName] = table;
                 columns.push(columnName + ' ' + types[columnType]);
             });
-            self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')');
+            deferred.resolve(self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
         });
 
-    	return (_dbSchema);
+    	return (deferred.promise);
     };
 
 	/*
@@ -153,7 +155,6 @@ function ngdbRepository(repository, ngdb) {
 	self.setBy = function(by) {
 		var by_formated = [];
 		_ngdbUtils._followObject(by, function(val, key) {
-			//by_formated.push(key + " = '" + val + "'");
 			by_formated.push(key + " = ?");
 			_bindings.push(val);
 		})
@@ -203,6 +204,7 @@ function ngdbRepository(repository, ngdb) {
 
 	self.getOne = function() {
 		var query = "SELECT * FROM " + _currentRepo;
+		self.setLimit(0, 1);
 		query = _constructSubParams(query);
 
 		return (
