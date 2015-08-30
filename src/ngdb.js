@@ -1,14 +1,27 @@
 angular
 	.module('ngDatabase', ['ngCordova'])
+	.constant('CONSTANTS', {
+		'TYPES': {
+			ID: 		'integer primary key',
+			STRING: 	'text',
+			NUMBER: 	'integer',
+			BOOLEAN: 	'boolean',
+			OBJECT: 	'text',
+			ARRAY: 		'text',
+			DATE: 		'datetime'
+		}
+	})
 	.factory('ngdb', ngdb);
 
-ngdb.$inject = ['$q', '$cordovaSQLite'];
+ngdb.$inject = ['$q', '$cordovaSQLite', 'CONSTANTS'];
 
-function ngdb($q, $cordovaSQLite) {
+function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	var self = this;
+	/* PRIVATE VARS */
 	var _db = null;
-	var _dbSchema = null;
+	var _dbSchema = {};
 	var _ngdbUtils = new ngdbUtils();
+	/* PUBLIC VARS */
 
 	/*
 	** PRIVATE METHODS
@@ -36,33 +49,22 @@ function ngdb($q, $cordovaSQLite) {
     };
 
     self.createRepositories = function(dbSchema) {
-    	var deferred = $q.defer();
-    	var types = {
-    		ID: 		'integer primary key',
-    		STRING: 	'text',
-    		NUMBER: 	'integer',
-    		BOOLEAN: 	'boolean',
-    		OBJECT: 	'text',
-    		ARRAY: 		'text',
-    		DATE: 		'datetime'
-    	};
-    	_dbSchema = (_dbSchema) ? _dbSchema : {};
+    	var requests = [];
 
     	_ngdbUtils._followObject(dbSchema, function(table, tableName) {
             var columns = [];
 
             _ngdbUtils._followObject(table, function(columnType, columnName) {
-            	if (!types[columnType]) {
-            		deferred.reject("Unable to find '"+ columnType +"' datatype.");
+            	if (!CONSTANTS.TYPES[columnType]) {
             		_errorHandler("Unable to find '"+ columnType +"' datatype.");
             	}
-            	_dbSchema[tableName] = table;
-                columns.push(columnName + ' ' + types[columnType]);
+                columns.push(columnName + ' ' + CONSTANTS.TYPES[columnType]);
             });
-            deferred.resolve(self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
+            _dbSchema[tableName] = table;
+            requests.push(self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
         });
 
-    	return (deferred.promise);
+    	return ($q.all(requests));
     };
 
 	/*
@@ -83,7 +85,7 @@ function ngdb($q, $cordovaSQLite) {
 
 	self.query = function(query, bindings) {
         var deferred = $q.defer();
-        bindings = (typeof bindings !== 'undefined') ? bindings : [];
+        bindings = (bindings !== undefined && bindings !== null) ? bindings : [];
 
 		_db.transaction(function(transaction) {
             transaction.executeSql(query, bindings, function(transaction, result) {
