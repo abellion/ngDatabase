@@ -74,7 +74,7 @@ angular.module('myApp', ['ngDatabase']);
 ### Initialize ngDatabase
 ##### Prototype
 ```javascript
-void init (object NGDB_SCHEMA)
+promise init (object NGDB_SCHEMA)
 ```
 ##### Description
 ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SCHEMA object (see [Create Repositories] (#create-repositories)).
@@ -100,6 +100,7 @@ object NGDB_SCHEMA
 ```
 ##### Description
 Repositories are the equivalent of tables in SQL. In other words, it's where and how your data are stored.
+You can create repositories when you init ngDatabase or with the createRepositories() method.
 ##### Exemple
 For exemple, if you have an user management in your app, your repositories looks like that :
 ```javascript
@@ -115,6 +116,10 @@ var NGDB_SCHEMA = {
     pictures:   'OBJECT'
   }
 };
+
+//Following both methods work
+ngdb.init(NGDB_SCHEMA);
+ngdb.createRepositories(NGDB_SCHEMA);
 ```
 ##### Typing
 For each repository field you have to indicate the value type.
