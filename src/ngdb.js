@@ -71,7 +71,7 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	** USER GETTER METHODS
 	*/
 	self.getRepository = function(repositoryName) {
-		var repository = new ngdbRepository(repositoryName, self);
+		var repository = new ngdbRepository(repositoryName, self, _ngdbUtils);
 
 		return (repository);
 	};
@@ -79,8 +79,8 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	/*
 	** LOW LEVEL USER METHODS
 	*/
-	self.getDbSchema = function() {
-		return (_dbSchema);
+	self.getDbSchema = function(repository) {
+		return ((repository) ? _dbSchema[repository] : _dbSchema);
 	};
 
 	self.query = function(query, bindings) {
@@ -115,28 +115,21 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	return (self);
 }
 
-function ngdbRepository(repository, ngdb) {
+function ngdbRepository(repository, ngdb, ngdbUtils) {
 	var self = this;
 	/* VARIABLE ATTRIBUTS */
-	var _currentRepo = repository;
 	var _currentOrder = null;
 	var _currentBy = null;
 	var _currentLimit = [];
+	var _repository = repository;
 	var _bindings = [];
 	/* FUNCTION ATTRIBUTS */
 	var _ngdb = ngdb;
-	var _ngdbUtils = new ngdbUtils();
+	var _ngdbUtils = ngdbUtils;
 
 	/*
 	** PRIVATE METHODS
 	*/
-	var _resetParams = function() {
-		_currentBy = null;
-		_currentOrder = null;
-		_currentLimit = [];
-		_bindings = [];
-	};
-
 	var _constructSubParams = function(query) {
 		var subParams = [
 			{"condition": _currentBy, "value": " WHERE " + _currentBy},
@@ -149,6 +142,15 @@ function ngdbRepository(repository, ngdb) {
 		});
 
 		return (query);
+	};
+
+	var _makeQuery = function(query, bindings) {
+		_currentBy = null;
+		_currentOrder = null;
+		_currentLimit = [];
+		_bindings = [];
+
+		return (_ngdb.query(query, bindings));
 	};
 
 	/*
@@ -188,83 +190,86 @@ function ngdbRepository(repository, ngdb) {
 	** DB TRANSACTIONS
 	*/
 	self.get = function() {
-		var query = "SELECT * FROM " + _currentRepo;
+		var query = "SELECT * FROM " + _repository;
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query, _bindings)
+			_makeQuery(query, _bindings)
 			.then(function(result) {
 				var fetched = _ngdb.fetchAll(result);
 
 				fetched.forEach(function(val, index) {
-					fetched[index] = _ngdbUtils._transformData(val, _ngdb.getDbSchema()[_currentRepo]);
+					fetched[index] = _ngdbUtils._transformData(val, _ngdb.getDbSchema(_repository));
 				});
 
-				return (_resetParams(), fetched);
+				return (fetched);
 			})
 		);
 	};
 
 	self.getOne = function() {
-		var query = "SELECT * FROM " + _currentRepo;
 		self.setLimit(0, 1);
+
+		var query = "SELECT * FROM " + _repository;
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query, _bindings)
+			_makeQuery(query, _bindings)
 			.then(function(result) {
 				var fetched = _ngdb.fetch(result);
-				fetched = _ngdbUtils._transformData(fetched, _ngdb.getDbSchema()[_currentRepo]);
+				fetched = _ngdbUtils._transformData(fetched, _ngdb.getDbSchema(_repository));
 
-				return (_resetParams(), (Object.keys(fetched).length) ? fetched : null);
+				return ((Object.keys(fetched).length) ? fetched : null);
 			})
 		);
 	};
 
 	self.add = function(data) {
 		var fields = [];
-		var values = [];
-		var bindings = [];
-		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema()[_currentRepo]);
+		var matching = [];
+		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema(_repository));
 
 		_ngdbUtils._followObject(data, function(val, key) {
 			fields.push(key);
-			values.push(val);
-			bindings.push("?");
+			matching.push("?");
 		});
-		var query = "INSERT INTO " + _currentRepo + "(" + fields.join(", ") + ") VALUES(" + bindings.join(", ") + ")";
+		var query = "INSERT INTO " + _repository + "(" + fields.join(", ") + ") VALUES(" + matching.join(", ") + ")";
 
-		return (_resetParams(), _ngdb.query(query, values));
+		return (
+			_makeQuery(query, fields.map(function(val) {
+				return (data[val]);
+			}))
+		);
 	};
 
 	self.update = function(data) {
 		var values = [];
 		var bindings = [];
-		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema()[_currentRepo]);
+		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema(_repository));
 
 		_ngdbUtils._followObject(data, function(val, key) {
 			values.push(val);
 			bindings.push(key + " = ?");
 		});
-		var query = "UPDATE " + _currentRepo + " SET " + bindings.join(", ");
+		var query = "UPDATE " + _repository + " SET " + bindings.join(", ");
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query, values.concat(_bindings))
+			_makeQuery(query, values.concat(_bindings))
 			.then(function(result) {
-				return (_resetParams(), result);
+				return (result);
 			})
 		);
 	};
 
 	self.delete = function() {
-		var query= "DELETE FROM " + _currentRepo;
+		var query= "DELETE FROM " + _repository;
 		query = _constructSubParams(query);
 
 		return (
-			_ngdb.query(query, _bindings)
+			_makeQuery(query, _bindings)
 			.then(function(result){
-				return (_resetParams(), result);
+				return (result);
 			})
 		);
 	};
