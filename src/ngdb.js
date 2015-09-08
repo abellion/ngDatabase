@@ -1,27 +1,25 @@
 angular
 	.module('ngDatabase', ['ngCordova'])
-	.constant('CONSTANTS', {
-		'TYPES': {
-			ID: 		'integer primary key',
-			STRING: 	'text',
-			NUMBER: 	'integer',
-			BOOLEAN: 	'boolean',
-			OBJECT: 	'text',
-			ARRAY: 		'text',
-			DATE: 		'datetime'
-		}
-	})
-	.factory('ngdb', ngdb);
+	.factory('ngdb', ngdb)
+	.factory('ngdbRepository', ngdbRepository);
 
-ngdb.$inject = ['$q', '$cordovaSQLite', 'CONSTANTS'];
+ngdb.$inject = ['$q', '$cordovaSQLite', 'ngdbRepository'];
+ngdbRepository.$inject = ['$q'];
 
-function ngdb($q, $cordovaSQLite, CONSTANTS) {
+function ngdb($q, $cordovaSQLite, ngdbRepository) {
 	var self = this;
 	/* PRIVATE VARS */
 	var _db = null;
 	var _dbSchema = {};
-	var _ngdbUtils = new ngdbUtils();
-	/* PUBLIC VARS */
+	var _dataTypes = {
+		ID: 		'integer primary key',
+		STRING: 	'text',
+		NUMBER: 	'integer',
+		BOOLEAN: 	'boolean',
+		OBJECT: 	'text',
+		ARRAY: 		'text',
+		DATE: 		'datetime'
+	};
 
 	/*
 	** PRIVATE METHODS
@@ -51,14 +49,14 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
     self.createRepositories = function(dbSchema) {
     	var requests = [];
 
-    	_ngdbUtils._followObject(dbSchema, function(table, tableName) {
+    	ngdbUtils().browseObject(dbSchema, function(table, tableName) {
             var columns = [];
 
-            _ngdbUtils._followObject(table, function(columnType, columnName) {
-            	if (!CONSTANTS.TYPES[columnType]) {
+            ngdbUtils().browseObject(table, function(columnType, columnName) {
+            	if (!_dataTypes[columnType]) {
             		_errorHandler("Unable to find '"+ columnType +"' datatype.");
             	}
-                columns.push(columnName + ' ' + CONSTANTS.TYPES[columnType]);
+                columns.push(columnName + ' ' + _dataTypes[columnType]);
             });
             _dbSchema[tableName] = table;
             requests.push(self.query('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
@@ -71,16 +69,14 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	** USER GETTER METHODS
 	*/
 	self.getRepository = function(repositoryName) {
-		var repository = new ngdbRepository(repositoryName, self, _ngdbUtils);
-
-		return (repository);
+		return (ngdbRepository.getRepository(self, repositoryName));
 	};
 
 	/*
 	** LOW LEVEL USER METHODS
 	*/
-	self.getDbSchema = function(repository) {
-		return ((repository) ? _dbSchema[repository] : _dbSchema);
+	self.getDbSchema = function(repositoryName) {
+		return ((repositoryName && _dbSchema[repositoryName]) ? _dbSchema[repositoryName] : _dbSchema);
 	};
 
 	self.query = function(query, bindings) {
@@ -115,163 +111,226 @@ function ngdb($q, $cordovaSQLite, CONSTANTS) {
 	return (self);
 }
 
-function ngdbRepository(repository, ngdb, ngdbUtils) {
+function ngdbRepository($q, ngdb, repositoryName) {
 	var self = this;
-	/* VARIABLE ATTRIBUTS */
-	var _currentOrder = null;
-	var _currentBy = null;
-	var _currentLimit = [];
-	var _repository = repository;
-	var _bindings = [];
-	/* FUNCTION ATTRIBUTS */
-	var _ngdb = ngdb;
-	var _ngdbUtils = ngdbUtils;
+	var dbSchema = ngdb && ngdb.getDbSchema();
+
+	/*
+	** PROTECTED METHODS
+	*/
+	self.getRepository = function(ngdb, repositoryName) {
+		return (new ngdbRepository($q, ngdb, repositoryName));
+	};
+
+	/*
+	** USER METHODS
+	*/
+	self.get = function() {
+		var deferred = $q.defer();
+		var query = this.buildQuery('SELECT');
+		var result = ngdb.query(query['query'], query['binds']);
+
+		result
+		.then(function(result) {
+			var fetched = ngdb.fetchAll(result);
+
+			fetched.forEach(function(val, index) {
+				fetched[index] = ngdbUtils().transformData(val, dbSchema[repositoryName]);
+			});
+			deferred.resolve(fetched);
+		}, deferred.reject);
+
+		return (deferred.promise);
+	};
+
+	self.getOne = function() {
+		var deferred = $q.defer();
+		var query = this.setLimit(0, 1).buildQuery('SELECT');
+		var result = ngdb.query(query['query'], query['binds']);
+
+		result.then(function(result) {
+			var fetched = ngdbUtils().transformData(ngdb.fetch(result), dbSchema[repositoryName]);
+
+			deferred.resolve((fetched) ? fetched : null);
+		}, deferred.reject);
+
+		return (deferred.promise);
+	};
+
+	self.add = function(data) {
+		var query = this.buildQuery('INSERT', ngdbUtils().transformData(data, dbSchema[repositoryName]));
+		var result = ngdb.query(query['query'], query['binds']);
+
+		return (result);
+	};
+
+	self.update = function(data) {
+		var query = this.buildQuery('UPDATE', ngdbUtils().transformData(data, dbSchema[repositoryName]));
+		var result = ngdb.query(query['query'], query['binds']);
+
+		return (result);
+	};
+
+	self.delete = function() {
+		var query = this.buildQuery('DELETE');
+		var result = ngdb.query(query['query'], query['binds']);
+
+		return (result);
+	};
+
+	return (queryBuilder.call(self, true, repositoryName), self);
+}
+
+function queryBuilder(isNewBuilder, repositoryName) {
+	var self = this;
+	/* PRIVATE ATTRIBUTS */
+	var _queryConditions = {
+		'where': {'matching': [], 'binds': []},
+		'order': {'matching': [], 'binds': []},
+		'limit': {'matching': [], 'binds': []}
+	};
+	var _querySpec = {
+		'data': {'matching': [], 'binds': []},
+		'table': repositoryName
+	};
 
 	/*
 	** PRIVATE METHODS
 	*/
-	var _constructSubParams = function(query) {
-		var subParams = [
-			{"condition": _currentBy, "value": " WHERE " + _currentBy},
-			{"condition": _currentOrder, "value": " ORDER BY " + _currentOrder},
-			{"condition": _currentLimit.length, "value": " LIMIT " + _currentLimit[0] + ", " + _currentLimit[1]}
-		];
+	var _getNewInstance = function() {
+		var instance = new queryBuilder(false, repositoryName);
+		instance.__proto__ = self;
 
-		subParams.forEach(function(val) {
-			query += (val["condition"]) ? val["value"] : "";
-		});
-
-		return (query);
+		return (instance);
 	};
 
-	var _makeQuery = function(query, bindings) {
-		_currentBy = null;
-		_currentOrder = null;
-		_currentLimit = [];
-		_bindings = [];
+	var _buildSelectQuery = function() {
+		return ("SELECT * FROM " + _querySpec['table']);
+	};
 
-		return (_ngdb.query(query, bindings));
+	var _buildUpdateQuery = function() {
+		var matching = _querySpec['data']['matching'].map(function(val) {
+			return (val + " = ?");
+		});
+
+		return ("UPDATE " + _querySpec['table'] + " SET " + matching.join(","));
+	};
+
+	var _buildInsertQuery = function() {
+		var matching = _querySpec['data']['matching'].map(function(val) {
+			return ("?");
+		});
+
+		return ("INSERT INTO " + _querySpec['table'] + " (" + _querySpec['data']['matching'].join(",") + ") VALUES (" + matching.join(",") + ")");
+	};
+
+	var _buildDeleteQuery = function() {
+		return ("DELETE FROM " + _querySpec['table']);
+	};
+
+	var _buildWhereCondition = function() {
+		var matching = _queryConditions['where']['matching'].map(function(val) {
+			return (val + " = ?");
+		});
+
+		return ("WHERE " + matching.join(" and "));
+	};
+
+	var _buildOrderCondition = function() {
+		return ("ORDER BY " + _queryConditions['order']['matching'].join(","));
+	};
+
+	var _buildLimitCondition = function() {
+		return ("LIMIT " + _queryConditions['limit']['matching'][0] + "," + _queryConditions['limit']['matching'][1]);
+	};
+
+	var _buildSubParam = function() {
+		var paramsTemplate = {
+			"where": _buildWhereCondition,
+			"order": _buildOrderCondition,
+			"limit": _buildLimitCondition
+		};
+		var subParams = [];
+
+		ngdbUtils().browseObject(_queryConditions, function(val, key) {
+			if (val['matching'].length) {
+				subParams.push(paramsTemplate[key].call());
+			}
+		});
+
+		return (subParams.join(" "));
+	};
+
+	/*
+	** PROTECTED METHODS
+	*/
+	self.setData = function(data) {
+		if (isNewBuilder) {
+			return (_getNewInstance().setData(data));
+		}
+		ngdbUtils().browseObject(data, function(val, key) {
+			_querySpec['data']['matching'].push(key);
+			_querySpec['data']['binds'].push(val);
+		});
+	};
+
+	self.buildQuery = function(queryType, data) {
+		if (isNewBuilder) {
+			return (_getNewInstance().buildQuery(queryType, data));
+		}
+		var queryTemplate = {
+			'SELECT': _buildSelectQuery,
+			'UPDATE': _buildUpdateQuery,
+			'INSERT': _buildInsertQuery,
+			'DELETE': _buildDeleteQuery
+		};
+
+		self.setData(data);
+		var query = queryTemplate[queryType].call() + " " + _buildSubParam();
+		var queryConditionsBinds = [];
+		var querySpecBinds = _querySpec['data']['binds'];
+
+		ngdbUtils().browseObject(_queryConditions, function(val) {
+			queryConditionsBinds = queryConditionsBinds.concat(val['binds']);
+		});
+
+		return ({'query': query, 'binds': querySpecBinds.concat(queryConditionsBinds)});
 	};
 
 	/*
 	** SETTERS
 	*/
-	self.setBy = function(by) {
-		var by_formated = [];
-
-		_ngdbUtils._followObject(by, function(val, key) {
-			by_formated.push(key + " = ?");
-			_bindings.push(val);
-		})
-		_currentBy = by_formated.join(' and ');
+	self.setBy = function(where) {
+		if (isNewBuilder) {
+			return (_getNewInstance().setBy(where));
+		}
+		ngdbUtils().browseObject(where, function(val, key) {
+			_queryConditions['where']['matching'].push(key);
+			_queryConditions['where']['binds'].push(val);
+		});
 
 		return (self);
 	};
 
 	self.setOrder = function(order) {
-		var order_formated = [];
-
-		_ngdbUtils._followObject(order, function(val, key) {
-			order_formated.push(key + " " + val);
+		if (isNewBuilder) {
+			return (_getNewInstance().setOrder(order));
+		}
+		ngdbUtils().browseObject(order, function(val, key) {
+			_queryConditions['order']['matching'].push(key + " " + val);
 		});
-		_currentOrder = order_formated.join(', ');
 
 		return (self);
 	};
 
 	self.setLimit = function(from, to) {
-		_currentLimit[0] = parseInt(from, 10);
-		_currentLimit[1] = parseInt(to, 10);
+		if (isNewBuilder) {
+			return (_getNewInstance().setLimit(from, to));
+		}
+		_queryConditions['limit']['matching'][0] = parseInt(from, 10);
+		_queryConditions['limit']['matching'][1] = parseInt(to, 10);
 
 		return (self);
-	};
-
-	/*
-	** DB TRANSACTIONS
-	*/
-	self.get = function() {
-		var query = "SELECT * FROM " + _repository;
-		query = _constructSubParams(query);
-
-		return (
-			_makeQuery(query, _bindings)
-			.then(function(result) {
-				var fetched = _ngdb.fetchAll(result);
-
-				fetched.forEach(function(val, index) {
-					fetched[index] = _ngdbUtils._transformData(val, _ngdb.getDbSchema(_repository));
-				});
-
-				return (fetched);
-			})
-		);
-	};
-
-	self.getOne = function() {
-		self.setLimit(0, 1);
-
-		var query = "SELECT * FROM " + _repository;
-		query = _constructSubParams(query);
-
-		return (
-			_makeQuery(query, _bindings)
-			.then(function(result) {
-				var fetched = _ngdb.fetch(result);
-				fetched = _ngdbUtils._transformData(fetched, _ngdb.getDbSchema(_repository));
-
-				return ((Object.keys(fetched).length) ? fetched : null);
-			})
-		);
-	};
-
-	self.add = function(data) {
-		var fields = [];
-		var matching = [];
-		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema(_repository));
-
-		_ngdbUtils._followObject(data, function(val, key) {
-			fields.push(key);
-			matching.push("?");
-		});
-		var query = "INSERT INTO " + _repository + "(" + fields.join(", ") + ") VALUES(" + matching.join(", ") + ")";
-
-		return (
-			_makeQuery(query, fields.map(function(val) {
-				return (data[val]);
-			}))
-		);
-	};
-
-	self.update = function(data) {
-		var values = [];
-		var bindings = [];
-		data = _ngdbUtils._transformData(data, _ngdb.getDbSchema(_repository));
-
-		_ngdbUtils._followObject(data, function(val, key) {
-			values.push(val);
-			bindings.push(key + " = ?");
-		});
-		var query = "UPDATE " + _repository + " SET " + bindings.join(", ");
-		query = _constructSubParams(query);
-
-		return (
-			_makeQuery(query, values.concat(_bindings))
-			.then(function(result) {
-				return (result);
-			})
-		);
-	};
-
-	self.delete = function() {
-		var query= "DELETE FROM " + _repository;
-		query = _constructSubParams(query);
-
-		return (
-			_makeQuery(query, _bindings)
-			.then(function(result){
-				return (result);
-			})
-		);
 	};
 }
 
@@ -298,7 +357,7 @@ function ngdbUtils() {
 	/*
 	** PROTECTED METHODS
 	*/
-	self._followObject = function(obj, callback) {
+	self.browseObject = function(obj, callback) {
 		var keys = (obj === undefined || obj === null) ? [] : Object.keys(obj);
 
 		keys.forEach(function(key) {
@@ -310,10 +369,10 @@ function ngdbUtils() {
 		});
 	};
 
-	self._transformData = function(data, repoSchema) {
-		var formated = {};
+	self.transformData = function(data, repoSchema) {
+		var formated = (data) ? {} : null;
 
-		self._followObject(data, function(fieldValue, fieldName) {
+		self.browseObject(data, function(fieldValue, fieldName) {
 			if (repoSchema[fieldName]) {
 				if (_isObject(fieldValue)) {
 					fieldValue = JSON.stringify(fieldValue);
@@ -328,7 +387,9 @@ function ngdbUtils() {
 		return (formated);
 	};
 
-	self._errorHandler = function(message) {
+	self.errorHandler = function(message) {
 		throw(new Error("NGDB Error : " + message, "", ""));
 	};
+
+	return (self);
 }
