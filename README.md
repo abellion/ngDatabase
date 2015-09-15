@@ -26,7 +26,7 @@ Get started in 4 steps by following this guideline.
 
 * The very first thing you have to do is install ngDatabase : [ngDatabase installation] (#installation)
 
-* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to initialize and create repositories : [Initialize] (#initialize-ngdatabase), [Create Repositories] (#create-repositories)
+* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to create repositories : [Create Repositories] (#create-repositories)
 
 * Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get-repositories)
 
