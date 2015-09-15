@@ -10,7 +10,6 @@ __Note : this service will soon be available also for non Ionic project. Stay tu
 
 * [Get started] ()
 * [Installation] (#installation)
-* [Initialize] (#initialize-ngdatabase)
 * [Create Repositories] (#create-repositories)
 * [Get Repositories] (#get-repositories)
 * [Add data] (#add-data)
