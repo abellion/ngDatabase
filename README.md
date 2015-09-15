@@ -71,55 +71,33 @@ angular.module('myApp', ['ngDatabase']);
 
 ##### Important note : all of ngDatabase method must be used when the _deviceready_ event fired.
 
-### Initialize ngDatabase
-##### Prototype
-```javascript
-promise init (object NGDB_SCHEMA)
-```
-##### Description
-ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SCHEMA object (see [Create Repositories] (#create-repositories)).
-##### Exemple
-Don't forget to include _ngdb_ dependency in the angular _run()_ method (or where you want) :
-```javascript
-myApp.run(function($ionicPlatform, ngdb) {
-  var NGDB_SCHEMA = {
-    //...
-  };
-
-  $ionicPlatform.ready(function(){
-    ngdb.init(NGDB_SCHEMA);
-  });
-
-});
-```
-
 ### Create repositories
 ##### Prototype
 ```javascript
-object NGDB_SCHEMA
+ngdbProvider setRepository(string repositoryName, object repositorySchema)
 ```
 ##### Description
 Repositories are the equivalent of tables in SQL. In other words, it's where and how your data are stored.
-You can create repositories when you init ngDatabase or with the createRepositories() method.
 ##### Exemple
 For exemple, if you have an user management in your app, your repositories looks like that :
 ```javascript
-var NGDB_SCHEMA = {
-  users: {
+app.config(function(ngdbProvider) {
+  var usersRepository = {
     id:         'ID',
     pictures_id:'NUMBER'
     name:       'STRING',
     born:       'DATE'
-  },
-  pictures: {
+  };
+  
+  var pictures = {
     id:         'ID',
     pictures:   'OBJECT'
-  }
-};
-
-//Following both methods work
-ngdb.init(NGDB_SCHEMA);
-ngdb.createRepositories(NGDB_SCHEMA);
+  };
+  
+  ngdbProvider
+    .setRepository('users', usersRepository)
+    .setRepository('pictures', picturesRepository);
+});
 ```
 ##### Typing
 For each repository field you have to indicate the value type.
