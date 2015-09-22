@@ -10,7 +10,6 @@ __Note : this service will soon be available also for non Ionic project. Stay tu
 
 * [Get started] ()
 * [Installation] (#installation)
-* [Initialize] (#initialize-ngdatabase)
 * [Create Repositories] (#create-repositories)
 * [Get Repositories] (#get-repositories)
 * [Add data] (#add-data)
@@ -26,7 +25,7 @@ Get started in 4 steps by following this guideline.
 
 * The very first thing you have to do is install ngDatabase : [ngDatabase installation] (#installation)
 
-* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to initialize and create repositories : [Initialize] (#initialize-ngdatabase), [Create Repositories] (#create-repositories)
+* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to create repositories : [Create Repositories] (#create-repositories)
 
 * Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get-repositories)
 
@@ -71,55 +70,33 @@ angular.module('myApp', ['ngDatabase']);
 
 ##### Important note : all of ngDatabase method must be used when the _deviceready_ event fired.
 
-### Initialize ngDatabase
-##### Prototype
-```javascript
-promise init (object NGDB_SCHEMA)
-```
-##### Description
-ngDatabase _init()_ setup the local database configuration thanks to the NGDB_SCHEMA object (see [Create Repositories] (#create-repositories)).
-##### Exemple
-Don't forget to include _ngdb_ dependency in the angular _run()_ method (or where you want) :
-```javascript
-myApp.run(function($ionicPlatform, ngdb) {
-  var NGDB_SCHEMA = {
-    //...
-  };
-
-  $ionicPlatform.ready(function(){
-    ngdb.init(NGDB_SCHEMA);
-  });
-
-});
-```
-
 ### Create repositories
 ##### Prototype
 ```javascript
-object NGDB_SCHEMA
+ngdbProvider setRepository(string repositoryName, object repositorySchema)
 ```
 ##### Description
 Repositories are the equivalent of tables in SQL. In other words, it's where and how your data are stored.
-You can create repositories when you init ngDatabase or with the createRepositories() method.
 ##### Exemple
 For exemple, if you have an user management in your app, your repositories looks like that :
 ```javascript
-var NGDB_SCHEMA = {
-  users: {
+app.config(function(ngdbProvider) {
+  var usersRepository = {
     id:         'ID',
     pictures_id:'NUMBER'
     name:       'STRING',
     born:       'DATE'
-  },
-  pictures: {
+  };
+  
+  var pictures = {
     id:         'ID',
     pictures:   'OBJECT'
-  }
-};
-
-//Following both methods work
-ngdb.init(NGDB_SCHEMA);
-ngdb.createRepositories(NGDB_SCHEMA);
+  };
+  
+  ngdbProvider
+    .setRepository('users', usersRepository)
+    .setRepository('pictures', picturesRepository);
+});
 ```
 ##### Typing
 For each repository field you have to indicate the value type.
