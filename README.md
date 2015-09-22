@@ -59,7 +59,7 @@ npm install ng-database #NPM
 
 Include the ng-database js file in your project :
 ```html
-<script src="path/to/your/lib/ng-database/src/ng-database.min.js"></script>
+<script src="path/to/your/lib/ng-database/dist/ngdb.min.js"></script>
 ```
 Then include ngDatabase dependency :
 ```javascript
