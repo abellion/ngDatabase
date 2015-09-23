@@ -1,6 +1,6 @@
 {
   "name": "ng-database",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "ngDatabase is a very simple and powerful local storage solution for your Ionic hybrid apps.",
   "main": "ngdb.min.js",
   "keywords": [
