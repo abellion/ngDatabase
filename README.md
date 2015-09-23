@@ -317,7 +317,7 @@ object fetch(object SQLiteResult)
 ```
 ##### Description
 NGDatabase also allow you to use SQLite as native syntax.
-* query() : make an SQLite Query 
+* make() : make an SQLite Query 
 * fetchAll() : fetch all SQLite Query result 
 * fetch() : fetch one SQLite Query result
 
@@ -326,9 +326,8 @@ NGDatabase also allow you to use SQLite as native syntax.
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
-  var query = "SELECT * FROM users WEHRE name = ?";
-  var bindings = ['John Doe'];
-  var result = ngdb.query(query, bindings);
+  var qb      = ngdb.getQueryMaker();
+  var result  = qm.make("SELECT * FROM users WEHRE name = ?", ['John Doe']);
   
   result.then(function(result) {
     result = ngdb.fetchAll(result);
