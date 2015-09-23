@@ -71,6 +71,14 @@ function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
 		return (repository);
 	};
 
+	ngdb.getRepositorySchema = function(repositoryName) {
+		return (self.repositorySchema[repositoryName] || null);
+	};
+
+	ngdb.getQueryMaker = function() {
+		return (ngdbQuery);
+	};
+
 	return (ngdb.createRepositories(), ngdb);
 };
 angular
@@ -128,8 +136,8 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbBuilder', 'ngdbDataBinding'];
-function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) {
+ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
+function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
 	var self 				= this;
 	var _dataBinding 		= false;
 	var _repositoryName 	= null;
@@ -139,14 +147,14 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	** UTILS METHODS
 	*/
 	self.ngdbRepositoryGetNew = function() {
-		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder.ngdbBuilderGetNew(), ngdbDataBinding));
+		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder.ngdbQueryBuilderGetNew(), ngdbDataBinding, ngdbDataConverter));
 	};
 
 	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;
 
-		ngdbBuilder.ngdbBuilderSetRepository(repositoryName);
+		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
 		return (self);
 	};
@@ -161,14 +169,14 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 		var fetched = ngdbQuery.fetchAll(result);
 
 		fetched && fetched.forEach(function(val, index) {
-			fetched[index] = ngdbUtils.transformData(val, _repositorySchema);
+			fetched[index] = ngdbDataConverter.convertDataToGet(val, _repositorySchema);
 		});
 
 		return (fetched);
 	};
 
 	var _formatGetOne = function(result) {
-		var fetched = ngdbUtils.transformData(ngdbQuery.fetch(result), _repositorySchema);
+		var fetched = ngdbDataConverter.convertDataToGet(ngdbQuery.fetch(result), _repositorySchema);
 
 		return ((fetched) ? fetched : null);
 	};
@@ -219,7 +227,8 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	};
 
 	self.add = function(data) {
-		var query 	= this.buildQuery('INSERT', ngdbUtils.transformData(data, _repositorySchema));
+		data 		= ngdbDataConverter.convertDataToAdd(data, _repositorySchema);
+		var query 	= this.buildQuery('INSERT', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
 		_dataBindingUpdate(result);
@@ -227,7 +236,8 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	};
 
 	self.update = function(data) {
-		var query 	= this.buildQuery('UPDATE', ngdbUtils.transformData(data, _repositorySchema));
+		data 		= ngdbDataConverter.convertDataToAdd(data, _repositorySchema);
+		var query 	= this.buildQuery('UPDATE', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
 		_dataBindingUpdate(result);
@@ -242,7 +252,7 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 		return (this.resetBuilder(), result);
 	};
 
-	angular.extend(self, ngdbBuilder);
+	angular.extend(self, ngdbQueryBuilder);
 
 	return (self);
 }
@@ -329,10 +339,108 @@ function ngdbDataBinding(ngdbQuery, ngdbUtils) {
 }
 angular
 	.module('ngDatabase')
-	.service('ngdbBuilder', ngdbBuilder);
+	.factory('ngdbDataConverter', ngdbDataConverter);
 
-ngdbBuilder.$inject = ['ngdbUtils'];
-function ngdbBuilder(ngdbUtils) {
+ngdbDataConverter.$inject = ['ngdbUtils'];
+function ngdbDataConverter(ngdbUtils) {
+	var self 			= this;
+
+	/*
+	** PRIVATE METHODS
+	*/
+	var _isJson = function(val) {
+		var ret = null;
+
+		try {
+			ret = angular.fromJson(val);
+		} catch(e) {
+			return (false);
+		}
+
+		return (ret);
+	};
+
+	var _convertObjectToAdd = function(val) {
+		return (angular.isObject(val) &&  angular.toJson(val) || null);
+	};
+	var _convertObjectToGet = function(val) {
+		return (_isJson(val) || null);
+	};
+
+	var _convertDateToAdd = function(val) {
+		return (val instanceof Date && val.getTime() || null);
+	};
+	var _convertDateToGet = function(val) {
+		return (isFinite(val) && new Date(val) || null);
+	};
+
+	var _convertNumberToAdd = function(val) {
+		return (isFinite(val) && parseInt(val, 10) || null);
+	};
+	var _convertNumberToGet = function(val) {
+		return (isFinite(val) && parseInt(val, 10) || null);
+	};
+
+	var _convertBoolToAdd = function(val) {
+		return ((val === true) ? true : false);
+	};
+	var _convertBoolToGet = function(val) {
+		return ((val === true) ? true : false);
+	};
+
+	var _convertDataToAdd = function(data, dataType) {
+		var converter = {
+			'OBJECT': 	_convertObjectToAdd,
+			'ARRAY': 	_convertObjectToAdd,
+			'DATE': 	_convertDateToAdd,
+			'BOOLEAN': 	_convertBoolToAdd,
+			'NUMBER': 	_convertNumberToAdd
+		};
+
+		return ((converter[dataType]) ? converter[dataType].call(null, data) : data);
+	};
+	var _convertDataToGet = function(data, dataType) {
+		var converter = {
+			'OBJECT': 	_convertObjectToGet,
+			'ARRAY': 	_convertObjectToGet,
+			'DATE': 	_convertDateToGet,
+			'BOOLEAN': 	_convertBoolToGet,
+			'NUMBER': 	_convertNumberToGet
+		};
+
+		return ((converter[dataType]) ? converter[dataType].call(null, data) : data);
+	};
+	var _convertData = function(data, repositorySchema, fun) {
+		var formated = (data) ? {} : null;
+
+		ngdbUtils.browseObject(data, function(fieldValue, fieldName) {
+			if (repositorySchema && repositorySchema[fieldName]) {
+				formated[fieldName] = fun(fieldValue, repositorySchema[fieldName]);
+			}
+		});
+
+		return (formated);
+	};
+
+	/*
+	** PUBLIC METHODS
+	*/
+	self.convertDataToAdd = function(data, repositorySchema) {
+		return (_convertData(data, repositorySchema, _convertDataToAdd));
+	};
+
+	self.convertDataToGet = function(data, repositorySchema) {
+		return (_convertData(data, repositorySchema, _convertDataToGet));
+	};
+
+	return (self);
+}
+angular
+	.module('ngDatabase')
+	.service('ngdbQueryBuilder', ngdbQueryBuilder);
+
+ngdbQueryBuilder.$inject = ['ngdbUtils'];
+function ngdbQueryBuilder(ngdbUtils) {
 	var self = this;
 	/* PRIVATE ATTRIBUTS */
 	var _queryParams = {
@@ -409,14 +517,14 @@ function ngdbBuilder(ngdbUtils) {
 	/*
 	** PROTECTED METHODS
 	*/
-	self.ngdbBuilderSetRepository = function(repositoryName) {
+	self.ngdbQueryBuilderSetRepository = function(repositoryName) {
 		_queryParams['table'] = repositoryName;
 
 		return (this);
 	};
 
-	self.ngdbBuilderGetNew = function() {
-		return (new ngdbBuilder(ngdbUtils));
+	self.ngdbQueryBuilderGetNew = function() {
+		return (new ngdbQueryBuilder(ngdbUtils));
 	};
 
 	self.setData = function(data) {
@@ -494,26 +602,6 @@ ngdbUtils.$inject = [];
 function ngdbUtils() {
 	var self = this;
 
-	/*
-	** PRIVATE METHODS
-	*/
-	var _isObject = function(obj) {
-		return (typeof obj === "object")
-	};
-
-	var _isJson = function(json) {
-		try {
-			JSON.parse(json);
-		} catch(e) {
-			return (false);
-		}
-
-		return (true);
-	};
-
-	/*
-	** PROTECTED METHODS
-	*/
 	self.browseObject = function(obj, callback) {
 		for (var key in obj) {
 			var val = obj[key];
@@ -522,25 +610,6 @@ function ngdbUtils() {
 				callback(val, key);
 			}
 		}
-	};
-
-	self.transformData = function(data, repositorySchema) {
-		var formated = (data) ? {} : null;
-
-		self.browseObject(data, function(fieldValue, fieldName) {
-			if (repositorySchema && repositorySchema[fieldName] || !repositorySchema) {
-				if (_isObject(fieldValue)) {
-					fieldValue = angular.toJson(fieldValue);
-				}
-				else if (_isJson(fieldValue)) {
-					fieldValue = angular.fromJson(fieldValue);
-				}
-
-				formated[fieldName] = fieldValue;
-			}
-		});
-
-		return (formated);
 	};
 
 	self.errorHandler = function(message) {

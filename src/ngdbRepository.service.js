@@ -2,8 +2,8 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbBuilder', 'ngdbDataBinding'];
-function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) {
+ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
+function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
 	var self 				= this;
 	var _dataBinding 		= false;
 	var _repositoryName 	= null;
@@ -13,14 +13,14 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	** UTILS METHODS
 	*/
 	self.ngdbRepositoryGetNew = function() {
-		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder.ngdbBuilderGetNew(), ngdbDataBinding));
+		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder.ngdbQueryBuilderGetNew(), ngdbDataBinding, ngdbDataConverter));
 	};
 
 	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;
 
-		ngdbBuilder.ngdbBuilderSetRepository(repositoryName);
+		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
 		return (self);
 	};
@@ -35,14 +35,14 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 		var fetched = ngdbQuery.fetchAll(result);
 
 		fetched && fetched.forEach(function(val, index) {
-			fetched[index] = ngdbUtils.transformData(val, _repositorySchema);
+			fetched[index] = ngdbDataConverter.convertDataToGet(val, _repositorySchema);
 		});
 
 		return (fetched);
 	};
 
 	var _formatGetOne = function(result) {
-		var fetched = ngdbUtils.transformData(ngdbQuery.fetch(result), _repositorySchema);
+		var fetched = ngdbDataConverter.convertDataToGet(ngdbQuery.fetch(result), _repositorySchema);
 
 		return ((fetched) ? fetched : null);
 	};
@@ -93,7 +93,8 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	};
 
 	self.add = function(data) {
-		var query 	= this.buildQuery('INSERT', ngdbUtils.transformData(data, _repositorySchema));
+		data 		= ngdbDataConverter.convertDataToAdd(data, _repositorySchema);
+		var query 	= this.buildQuery('INSERT', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
 		_dataBindingUpdate(result);
@@ -101,7 +102,8 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 	};
 
 	self.update = function(data) {
-		var query 	= this.buildQuery('UPDATE', ngdbUtils.transformData(data, _repositorySchema));
+		data 		= ngdbDataConverter.convertDataToAdd(data, _repositorySchema);
+		var query 	= this.buildQuery('UPDATE', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
 		_dataBindingUpdate(result);
@@ -116,7 +118,7 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbBuilder, ngdbDataBinding) 
 		return (this.resetBuilder(), result);
 	};
 
-	angular.extend(self, ngdbBuilder);
+	angular.extend(self, ngdbQueryBuilder);
 
 	return (self);
 }

@@ -1,9 +1,9 @@
 angular
 	.module('ngDatabase')
-	.service('ngdbBuilder', ngdbBuilder);
+	.service('ngdbQueryBuilder', ngdbQueryBuilder);
 
-ngdbBuilder.$inject = ['ngdbUtils'];
-function ngdbBuilder(ngdbUtils) {
+ngdbQueryBuilder.$inject = ['ngdbUtils'];
+function ngdbQueryBuilder(ngdbUtils) {
 	var self = this;
 	/* PRIVATE ATTRIBUTS */
 	var _queryParams = {
@@ -80,14 +80,14 @@ function ngdbBuilder(ngdbUtils) {
 	/*
 	** PROTECTED METHODS
 	*/
-	self.ngdbBuilderSetRepository = function(repositoryName) {
+	self.ngdbQueryBuilderSetRepository = function(repositoryName) {
 		_queryParams['table'] = repositoryName;
 
 		return (this);
 	};
 
-	self.ngdbBuilderGetNew = function() {
-		return (new ngdbBuilder(ngdbUtils));
+	self.ngdbQueryBuilderGetNew = function() {
+		return (new ngdbQueryBuilder(ngdbUtils));
 	};
 
 	self.setData = function(data) {

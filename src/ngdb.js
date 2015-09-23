@@ -71,5 +71,13 @@ function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
 		return (repository);
 	};
 
+	ngdb.getRepositorySchema = function(repositoryName) {
+		return (self.repositorySchema[repositoryName] || null);
+	};
+
+	ngdb.getQueryMaker = function() {
+		return (ngdbQuery);
+	};
+
 	return (ngdb.createRepositories(), ngdb);
 };
