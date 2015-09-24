@@ -11,5 +11,6 @@
   "authors": [
     "Antoine Bellion"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "ignore": [".gitignore"]
 }
