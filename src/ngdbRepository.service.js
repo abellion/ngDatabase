@@ -2,8 +2,8 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
-function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
+ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
+function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
 	var self 				= this;
 	var _dataBinding 		= false;
 	var _repositoryName 	= null;
@@ -12,10 +12,6 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBind
 	/*
 	** UTILS METHODS
 	*/
-	self.ngdbRepositoryGetNew = function() {
-		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder.ngdbQueryBuilderGetNew(), ngdbDataBinding, ngdbDataConverter));
-	};
-
 	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;

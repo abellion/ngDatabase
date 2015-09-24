@@ -41,8 +41,8 @@ function ngdbProvider(NGDB_TYPES) {
 	return (self);
 }
 
-ngdbFactory.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbRepository', 'NGDB_TYPES'];
-function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
+ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'NGDB_TYPES'];
+function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
 	var self 		= this;
 	var ngdb 		= {};
 
@@ -63,7 +63,7 @@ function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
 	};
 
 	ngdb.getRepository = function(repositoryName) {
-		var repository 			= ngdbRepository.ngdbRepositoryGetNew();
+		var repository 			= $injector.instantiate(ngdbRepository, { 'ngdbQueryBuilder': $injector.instantiate(ngdbQueryBuilder) });
 		var repositorySchema 	= self.repositorySchema[repositoryName];
 
 		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema);

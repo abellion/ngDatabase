@@ -41,8 +41,8 @@ function ngdbProvider(NGDB_TYPES) {
 	return (self);
 }
 
-ngdbFactory.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbRepository', 'NGDB_TYPES'];
-function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
+ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'NGDB_TYPES'];
+function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
 	var self 		= this;
 	var ngdb 		= {};
 
@@ -63,7 +63,7 @@ function ngdbFactory($q, ngdbUtils, ngdbQuery, ngdbRepository, NGDB_TYPES) {
 	};
 
 	ngdb.getRepository = function(repositoryName) {
-		var repository 			= ngdbRepository.ngdbRepositoryGetNew();
+		var repository 			= $injector.instantiate(ngdbRepository, { 'ngdbQueryBuilder': $injector.instantiate(ngdbQueryBuilder) });
 		var repositorySchema 	= self.repositorySchema[repositoryName];
 
 		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema);
@@ -136,8 +136,8 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
-function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
+ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
+function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
 	var self 				= this;
 	var _dataBinding 		= false;
 	var _repositoryName 	= null;
@@ -146,10 +146,6 @@ function ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBind
 	/*
 	** UTILS METHODS
 	*/
-	self.ngdbRepositoryGetNew = function() {
-		return (new ngdbRepository($q, ngdbUtils, ngdbQuery, ngdbQueryBuilder.ngdbQueryBuilderGetNew(), ngdbDataBinding, ngdbDataConverter));
-	};
-
 	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;
@@ -385,7 +381,7 @@ function ngdbDataConverter(ngdbUtils) {
 		return ((val === true) ? true : false);
 	};
 	var _convertBoolToGet = function(val) {
-		return ((val === true) ? true : false);
+		return ((val === "true") ? true : false);
 	};
 
 	var _convertDataToAdd = function(data, dataType) {
@@ -521,10 +517,6 @@ function ngdbQueryBuilder(ngdbUtils) {
 		_queryParams['table'] = repositoryName;
 
 		return (this);
-	};
-
-	self.ngdbQueryBuilderGetNew = function() {
-		return (new ngdbQueryBuilder(ngdbUtils));
 	};
 
 	self.setData = function(data) {

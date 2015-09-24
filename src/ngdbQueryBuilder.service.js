@@ -86,10 +86,6 @@ function ngdbQueryBuilder(ngdbUtils) {
 		return (this);
 	};
 
-	self.ngdbQueryBuilderGetNew = function() {
-		return (new ngdbQueryBuilder(ngdbUtils));
-	};
-
 	self.setData = function(data) {
 		ngdbUtils.browseObject(data, function(val, key) {
 			_queryParams['data']['matching'].push(key);

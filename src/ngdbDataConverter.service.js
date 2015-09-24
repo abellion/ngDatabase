@@ -46,7 +46,7 @@ function ngdbDataConverter(ngdbUtils) {
 		return ((val === true) ? true : false);
 	};
 	var _convertBoolToGet = function(val) {
-		return ((val === true) ? true : false);
+		return ((val === "true") ? true : false);
 	};
 
 	var _convertDataToAdd = function(data, dataType) {
