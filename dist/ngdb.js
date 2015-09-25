@@ -41,11 +41,14 @@ function ngdbProvider(NGDB_TYPES) {
 	return (self);
 }
 
-ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'NGDB_TYPES'];
-function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
+ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbCache', 'NGDB_TYPES'];
+function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, ngdbCache, NGDB_TYPES) {
 	var self 		= this;
 	var ngdb 		= {};
 
+	/*
+	** REPOSITORIES
+	*/
 	ngdb.createRepositories = function() {
 		var queries = [];
 		var schema 	= self.repositorySchema;
@@ -77,6 +80,23 @@ function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
 
 	ngdb.getQueryMaker = function() {
 		return (ngdbQuery);
+	};
+
+	/*
+	** WATCHERS
+	*/
+	ngdb.putWatcher = function(value, callback, call) {
+		var watcherId = ngdbCache.putWatcher(value, callback);
+
+		if (call === true || typeof call === "undefined") {
+			ngdbCache.callWatcher(value, value);
+		}
+
+		return (watcherId);
+	};
+
+	ngdb.popWatcher = function(watcherId) {
+		return (ngdbCache.popWatcher(watcherId));
 	};
 
 	return (ngdb.createRepositories(), ngdb);
@@ -136,10 +156,9 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
-function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
+ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbCache', 'ngdbDataConverter'];
+function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbCache, ngdbDataConverter) {
 	var self 				= this;
-	var _dataBinding 		= false;
 	var _repositoryName 	= null;
 	var _repositorySchema 	= null;
 
@@ -153,12 +172,6 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
 		return (self);
-	};
-
-	self.setDataBinding = function(val) {
-		_dataBinding = (val === true);
-
-		return(self);
 	};
 
 	var _formatGet = function(result) {
@@ -177,32 +190,27 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		return ((fetched) ? fetched : null);
 	};
 
-	var _dataBindingBind = function(query, dataFormater, watcher) {
-		if (_dataBinding) {
-			ngdbDataBinding.bind(_repositoryName, query, dataFormater, watcher);
-		}
-	};
-
-	var _dataBindingUpdate = function(promise) {
-		promise.then(function() {
-			ngdbDataBinding.update(_repositoryName);
-		});
-	};
-
 	/*
 	** USER METHODS
 	*/
 	self.get = function() {
 		var deferred 	= $q.defer();
 		var query 		= this.buildQuery('SELECT');
-		var result 		= ngdbQuery.make(query['query'], query['binds']);
+		var cache 		= ngdbCache.getCache(_repositoryName, query, _formatGet);
 
-		result.then(function(result) {
-			var ret = _formatGet(result);
+		if (cache === false) {
+			var result = ngdbQuery.make(query['query'], query['binds']);
 
-			deferred.resolve(ret);
-			_dataBindingBind(query, _formatGet, ret);
-		}, deferred.reject);
+			result.then(function(result) {
+				var formated = _formatGet(result);
+
+				deferred.resolve(formated);
+				ngdbCache.putCache(_repositoryName, query, _formatGet, formated);
+			}, deferred.reject);
+		}
+		else {
+			deferred.resolve(cache);
+		}
 
 		return (this.resetBuilder(), deferred.promise);
 	};
@@ -210,14 +218,21 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 	self.getOne = function() {
 		var deferred 	= $q.defer();
 		var query 		= this.setLimit(0, 1).buildQuery('SELECT');
-		var result 		= ngdbQuery.make(query['query'], query['binds']);
+		var cache 		= ngdbCache.getCache(_repositoryName, query, _formatGetOne);
 
-		result.then(function(result) {
-			var ret = _formatGetOne(result);
+		if (cache === false) {
+			var result = ngdbQuery.make(query['query'], query['binds']);
 
-			deferred.resolve(ret);
-			_dataBindingBind(query, _formatGetOne, ret);
-		}, deferred.reject);
+			result.then(function(result) {
+				var formated = _formatGetOne(result);
+
+				deferred.resolve(formated);
+				ngdbCache.putCache(_repositoryName, query, _formatGetOne, formated);
+			}, deferred.reject);
+		}
+		else {
+			deferred.resolve(cache);
+		}
 
 		return (this.resetBuilder(), deferred.promise);
 	};
@@ -227,7 +242,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('INSERT', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 
@@ -236,7 +251,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('UPDATE', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 
@@ -244,7 +259,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('DELETE');
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 
@@ -254,15 +269,16 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 }
 angular
 	.module('ngDatabase')
-	.factory('ngdbDataBinding', ngdbDataBinding);
+	.factory('ngdbCache', ngdbCache);
 
-ngdbDataBinding.$inject = ['ngdbQuery', 'ngdbUtils'];
-function ngdbDataBinding(ngdbQuery, ngdbUtils) {
+ngdbCache.$inject = ['ngdbQuery', 'ngdbUtils'];
+function ngdbCache(ngdbQuery, ngdbUtils) {
 	var self 		= this;
-	var _watchers 	= {};
+	var _cache 		= {};
+	var _watchers 	= [];
 
 	/*
-	** UTILS METHODS
+	** CACHE UTILS METHODS
 	*/
 	var _mergeArray = function(dst, src) {
 		src && src.forEach(function(val, key) {
@@ -302,33 +318,115 @@ function ngdbDataBinding(ngdbQuery, ngdbUtils) {
 	};
 
 	/*
-	** USER METHODS
+	** WATCH UTILS METHODS
 	*/
-	self.bind = function(repositoryName, query, dataFormater, watcher) {
-		if (!repositoryName || !query || !dataFormater || !watcher) {
+	var _getWatcher = function(value) {
+		var ret = false;
+
+		_watchers.some(function(watcher) {
+			return (watcher['value'] === value && (ret = watcher));
+		});
+
+		return ((ret === false) ? false : ret);
+	};
+
+	/*
+	** CACHE METHODS
+	*/
+	self.getCache = function(repositoryName, query, dataFormater) {
+		var repositoryCache 	= _cache[repositoryName];
+		var tmpDataFormater 	= dataFormater.toString();
+		var tmpQuery 			= JSON.stringify(query);
+		var ret 				= false;
+
+		repositoryCache && repositoryCache.some(function(bind) {
+			var bindDataFormater 	= bind['dataFormater'].toString();
+			var bindQuery 			= JSON.stringify(bind['query']);
+
+			return (bindQuery === tmpQuery && bindDataFormater === tmpDataFormater && (ret = bind));
+		});
+
+		return ((ret === false) ? false : ret['value']);
+	};
+
+	self.putCache = function(repositoryName, query, dataFormater, value) {
+		if (!repositoryName || !query || !dataFormater || !value) {
 			return (0);
 		}
-		_watchers[repositoryName] = (_watchers[repositoryName]) ? _watchers[repositoryName] : [];
+		_cache[repositoryName] = (_cache[repositoryName]) ? _cache[repositoryName] : [];
 
-		_watchers[repositoryName].push({
+		_cache[repositoryName].push({
 			'query': 		query,
-			'dataFormater': dataFormater,
-			'watcher': 		watcher
+			'value': 		value,
+			'dataFormater': dataFormater
 		});
 	};
 
-	self.update = function(repositoryName) {
-		var watchers = _watchers[repositoryName];
+	self.updateCache = function(repositoryName) {
+		var repositoryCache = _cache[repositoryName];
 
-		watchers && watchers.forEach(function(watcher) {
-			var query = ngdbQuery.make(watcher['query']['query'], watcher['query']['binds']);
+		repositoryCache && repositoryCache.forEach(function(bind) {
+			var query = ngdbQuery.make(bind['query']['query'], bind['query']['binds']);
 
 			query.then(function(result) {
-				var ret = watcher['dataFormater'].call(null, result);
+				var newValue = bind['dataFormater'].call(null, result);
+				var oldValue = angular.copy(bind['value']);
 
-				_mergeData(watcher['watcher'], ret);
+				_mergeData(bind['value'], newValue);
+				self.callWatcher(bind['value'], oldValue);
 			});
 		});
+	};
+
+	/*
+	** WATCH METHODS
+	*/
+	self.putWatcher = function(value, callback) {
+		var watcher 	= _getWatcher(value);
+		this.watcherId 	= this.watcherId || 0;
+
+		if (watcher) {
+			watcher['callbacks'].push({
+				'id': 		++this.watcherId,
+				'callback': callback
+			});
+
+			return (this.watcherId);
+		}
+		else {
+			_watchers.push({
+				'value': 		value,
+				'callbacks': 	[]
+			});
+
+			return (self.putWatcher(value, callback));
+		}
+
+		return (0);
+	};
+
+	self.popWatcher = function(watcherId) {
+		var ret = false;
+
+		_watchers.some(function(watcher, index) {
+			var tmp = watcher['callbacks'].some(function(callback, index) {
+				return (callback['id'] === watcherId && (ret = index));
+			});
+
+			return (tmp && delete _watchers[index]['callbacks'][ret]);
+		});
+
+		return (!(ret === false));
+	};
+
+	self.callWatcher = function(newValue, oldValue) {
+		var watcher = _getWatcher(newValue);
+
+		if (watcher) {
+			watcher['callbacks'].forEach(function(callback) {
+				callback['callback'](newValue, oldValue);
+			});
+		}
 	};
 
 	return (self);

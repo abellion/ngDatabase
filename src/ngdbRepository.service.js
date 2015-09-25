@@ -2,10 +2,9 @@ angular
 	.module('ngDatabase')
 	.service('ngdbRepository', ngdbRepository);
 
-ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbDataBinding', 'ngdbDataConverter'];
-function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbDataBinding, ngdbDataConverter) {
+ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbCache', 'ngdbDataConverter'];
+function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbCache, ngdbDataConverter) {
 	var self 				= this;
-	var _dataBinding 		= false;
 	var _repositoryName 	= null;
 	var _repositorySchema 	= null;
 
@@ -19,12 +18,6 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
 		return (self);
-	};
-
-	self.setDataBinding = function(val) {
-		_dataBinding = (val === true);
-
-		return(self);
 	};
 
 	var _formatGet = function(result) {
@@ -43,32 +36,27 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		return ((fetched) ? fetched : null);
 	};
 
-	var _dataBindingBind = function(query, dataFormater, watcher) {
-		if (_dataBinding) {
-			ngdbDataBinding.bind(_repositoryName, query, dataFormater, watcher);
-		}
-	};
-
-	var _dataBindingUpdate = function(promise) {
-		promise.then(function() {
-			ngdbDataBinding.update(_repositoryName);
-		});
-	};
-
 	/*
 	** USER METHODS
 	*/
 	self.get = function() {
 		var deferred 	= $q.defer();
 		var query 		= this.buildQuery('SELECT');
-		var result 		= ngdbQuery.make(query['query'], query['binds']);
+		var cache 		= ngdbCache.getCache(_repositoryName, query, _formatGet);
 
-		result.then(function(result) {
-			var ret = _formatGet(result);
+		if (cache === false) {
+			var result = ngdbQuery.make(query['query'], query['binds']);
 
-			deferred.resolve(ret);
-			_dataBindingBind(query, _formatGet, ret);
-		}, deferred.reject);
+			result.then(function(result) {
+				var formated = _formatGet(result);
+
+				deferred.resolve(formated);
+				ngdbCache.putCache(_repositoryName, query, _formatGet, formated);
+			}, deferred.reject);
+		}
+		else {
+			deferred.resolve(cache);
+		}
 
 		return (this.resetBuilder(), deferred.promise);
 	};
@@ -76,14 +64,21 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 	self.getOne = function() {
 		var deferred 	= $q.defer();
 		var query 		= this.setLimit(0, 1).buildQuery('SELECT');
-		var result 		= ngdbQuery.make(query['query'], query['binds']);
+		var cache 		= ngdbCache.getCache(_repositoryName, query, _formatGetOne);
 
-		result.then(function(result) {
-			var ret = _formatGetOne(result);
+		if (cache === false) {
+			var result = ngdbQuery.make(query['query'], query['binds']);
 
-			deferred.resolve(ret);
-			_dataBindingBind(query, _formatGetOne, ret);
-		}, deferred.reject);
+			result.then(function(result) {
+				var formated = _formatGetOne(result);
+
+				deferred.resolve(formated);
+				ngdbCache.putCache(_repositoryName, query, _formatGetOne, formated);
+			}, deferred.reject);
+		}
+		else {
+			deferred.resolve(cache);
+		}
 
 		return (this.resetBuilder(), deferred.promise);
 	};
@@ -93,7 +88,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('INSERT', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 
@@ -102,7 +97,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('UPDATE', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 
@@ -110,7 +105,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('DELETE');
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		_dataBindingUpdate(result);
+		ngdbCache.updateCache(_repositoryName);
 		return (this.resetBuilder(), result);
 	};
 

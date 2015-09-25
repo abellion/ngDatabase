@@ -41,11 +41,14 @@ function ngdbProvider(NGDB_TYPES) {
 	return (self);
 }
 
-ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'NGDB_TYPES'];
-function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
+ngdbFactory.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbCache', 'NGDB_TYPES'];
+function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, ngdbCache, NGDB_TYPES) {
 	var self 		= this;
 	var ngdb 		= {};
 
+	/*
+	** REPOSITORIES
+	*/
 	ngdb.createRepositories = function() {
 		var queries = [];
 		var schema 	= self.repositorySchema;
@@ -77,6 +80,23 @@ function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, NGDB_TYPES) {
 
 	ngdb.getQueryMaker = function() {
 		return (ngdbQuery);
+	};
+
+	/*
+	** WATCHERS
+	*/
+	ngdb.putWatcher = function(value, callback, call) {
+		var watcherId = ngdbCache.putWatcher(value, callback);
+
+		if (call === true || typeof call === "undefined") {
+			ngdbCache.callWatcher(value, value);
+		}
+
+		return (watcherId);
+	};
+
+	ngdb.popWatcher = function(watcherId) {
+		return (ngdbCache.popWatcher(watcherId));
 	};
 
 	return (ngdb.createRepositories(), ngdb);
