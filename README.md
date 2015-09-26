@@ -1,26 +1,31 @@
 # ngDatabase
-ngDatabase is a light, very easy to use and powerful local __database__ solution for your __Ionic apps__.
-You don't need to have a back-end or SQL background to understand this service.
-
-With ngDatabase you can store any data you want (text, number, date, object, ...) thanks to human-friendly methods names.
-
-__Note : this service will soon be available also for non Ionic project. Stay tuned !__
+ngDatabase is a light, very easy to use and powerful __storage__ solution for your __[Ionic](http://ionicframework.com/)__ apps. Take advantage of unlimited storage size, data binding, very flexible data management and more.  
 
 # Quick links
 
-* [Get started] ()
-* [Installation] (#installation)
-* [Create Repositories] (#create-repositories)
-* [Get Repositories] (#get-repositories)
-* [Add data] (#add-data)
-* [Delete data] (#delete-data)
-* [Get data] (#get-data)
-* [Update data] (#update-data)
-* [Set conditions] (#set-conditions)
-* [Native SQLite syntax] (#native-sqlite-syntax)
-* [Global exemple] (#global-example)
+* __Get started__
+  * [Quick guide] (#quick-guide)
+  * [Installation] (#installation)
+* __Repositories__
+  * [Create Repositories] (#create-repositories)
+  * [Get Repositories] (#get-repositories)
+* __Data operation__
+  * [Add data] (#add)
+  * [Get data] (#get)
+  * [Update data] (#update)
+  * [Delete data] (#delete)
+* __Data selection__
+  * [Set order](#order)
+  * [Set standards](#standards)
+  * [Set limit](#limit)
+* __Data binding__
+  * [How it works]()
+  * [Watch updates]()
+* __Low level usage__
+  * [Native SQLite syntax] (#native-sqlite-syntax)
 
-# Get started
+### Get started 
+#### Quick guide
 Get started in 4 steps by following this guideline.
 
 * The very first thing you have to do is install ngDatabase : [ngDatabase installation] (#installation)
@@ -33,8 +38,8 @@ Get started in 4 steps by following this guideline.
 
 * As you can observe we can't do a lot only with these 4 methods. It's the combination between them and 3 others which make the magic. These 3 others are _setBy(), setOrder()_ and _setLimit()_ which define by what criterion the data will be get, add, delete, ... Check it : [Set conditions] (#set-conditions)
 
-# Installation
-### ngCordova and cordovaSQLite
+### Installation
+#### ngCordova and cordovaSQLite
 First, install ndCordova to your project (http://ngcordova.com/docs/install/) :
 ```shell
 bower install ngCordova
@@ -51,7 +56,7 @@ Then, add the cordovaSQLite plugin :
 ```shell
 cordova plugin add https://github.com/litehelpers/Cordova-sqlite-storage.git
 ```
-### ngDatabase
+#### ngDatabase
 ```shell
 bower install ng-database #bower
 npm install ng-database #NPM
@@ -63,22 +68,22 @@ Include the ng-database js file in your project :
 ```
 Then include ngDatabase dependency :
 ```javascript
-angular.module('myApp', ['ngDatabase']);
+angular.module('myApp', ['ngCordova', 'ngDatabase']);
 ```
 
-# Usage
+# API
 
 ##### Important note : all of ngDatabase method must be used when the _deviceready_ event fired.
 
-### Create repositories
+### Repositories
+#### Create
 ##### Prototype
 ```javascript
 ngdbProvider setRepository(string repositoryName, object repositorySchema)
 ```
 ##### Description
-Repositories are the equivalent of tables in SQL. In other words, it's where and how your data are stored.
-##### Exemple
-For exemple, if you have an user management in your app, your repositories looks like that :
+A repository is a kind of bag which define your data schema. It's typically an object where each key-value pair correspond 	respectively to the name of your data and his type (see bellow). This operation is done in the config step of your app.
+For exemple, if you have to manage users and pictures in your app your repositories could look like that :
 ```javascript
 app.config(function(ngdbProvider) {
   var usersRepository = {
@@ -98,98 +103,71 @@ app.config(function(ngdbProvider) {
     .setRepository('pictures', picturesRepository);
 });
 ```
-##### Typing
-For each repository field you have to indicate the value type.
 
 * __ID__        : special integer type which is incremented at each insertion 
 * __STRING__    : can store string such as text
 * __NUMBER__    : an integer or floating number
-* __BOOLEAN__   : _true_ or _false_ values (same as 1 or 0)
+* __BOOLEAN__   : _true_ or _false_ values
 * __OBJECT__    : a javascript object
 * __ARRAY__     : a javascript array
-* __DATE__      : a date
+* __DATE__      : a date (must be an instance of Date())
 
-### Get repositories
+#### Get
 ##### Prototype
 ```javascript
 ngdb getRepository(string repositoryName)
 ```
 ##### Description
 This method allow you to make operations in the specified _repositoryName_.
-##### Exemple
+Use it to add, delete, update...
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
-  var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
+  var usersRepository     = ngdb.getRepository('users');
+  var picturesRepository  = ngdb.getRepository('pictures');
   
   //Make all your operations.
 
 });
 ```
 
-### Add data
+### Data operation
+#### Add
 ##### Prototype
 ```javascript
 promise add(object data)
 ```
 ##### Description
-Add new datas in repository.
+This method add some data in a repository. Only the keys that correspond to the mapping defined in the config step will be added. Note that you do not have to convert your data. Just let objects as objects, numbers as numbers, strings as strings, ...
 
-Note that you do not have to convert your data. Just let objects as objects, numbers as numbers, strings as strings, ...
+__Return__ a promise containing an object with the insertion informations (the ID particularly).
 
-__Return__ promise containing
-
-* An object with the insertion informations (the ID particularly)
-
-##### Exemple
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
-  var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
+  var usersRepository     = ngdb.getRepository('users');
+  var picturesRepository  = ngdb.getRepository('pictures');
   
   var userToAdd = {
-    pictures_id: 5,
-    name: 'Jack',
-    born: new Date().getTime()
+    pictures_id:  5,
+    name:         'Jack',
+    born:         new Date().getTime()
   };
   var pictureToAdd = {
-    pictures: {}
+    pictures:     {'path1', 'path2'}
   };
   
-  usersRepository.add(userToAdd);
-  picturesRepository.add(pictureToAdd);
+  var user    = usersRepository.add(userToAdd);
+  var picture = picturesRepository.add(pictureToAdd);
+
+  user.then(function(result) {
+    //The insered id
+    console.log(result.insertId);
+  });
 
 });
 ```
-
-### Delete Data
-##### Prototype
-```javascript
-promise delete()
-```
-##### Description
-Delete entries in the repository.
-
-__Return__ promise containing
-
-* An object with the informations about the deletion
-
-##### Exemple
-```javascript
-myApp.controller('myCtrl', function(ngdb) {
-
-  var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
-  
-  //Delete all users and pictures data
-  var usersData = usersRepository.delete();
-  var picturesData = picturesRepository.delete();
-});
-```
-
-### Get data
+### Get
 ##### Prototypes
 ```javascript
 promise get()
@@ -197,31 +175,34 @@ promise getOne()
 ```
 ##### Description
 Get data from repository.
-
 All your data are gived back to the correct type (objects as objects, numbers as numbers, ...)
 
-__Return__ promise containing
-
-* An object with the data
+__Return__ promise containing an object with the requested data.
 
 ##### Exemple
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
-  var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
+  var usersRepository     = ngdb.getRepository('users');
+  var picturesRepository  = ngdb.getRepository('pictures');
   
   //Get all users and pictures data
-  var usersData = usersRepository.get();
-  var picturesData = picturesRepository.get();
+  var usersData     = usersRepository.get();
+  var picturesData  = picturesRepository.get();
 
   //Get the first user and picture data
-  var firstUserData = usersRepository.getOne();
-  var firstPictureData = pictureRepository.getOne();
+  var firstUserData     = usersRepository.getOne();
+  var firstPictureData  = pictureRepository.getOne();
+  
+  usersData.then(function(result) {
+    //Your data is here !
+    console.log(result);
+  });
+  
 });
 ```
 
-### Update data
+#### Update
 ##### Prototype
 ```javascript
 promise update(object data)
@@ -229,86 +210,133 @@ promise update(object data)
 ##### Description
 Update the specified _data_.
 
-__Return__ promise containing
+__Return__ promise containing an object with informations about the update.
 
-* An object with informations about the update
-
-##### Exemple
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
-  var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
+  var usersRepository     = ngdb.getRepository('users');
+  var picturesRepository  = ngdb.getRepository('pictures');
   
   var usersToUpdate = {
-    pictures_id: 6,
-    name: 'John',
-    born: born: new Date().getTime()
+    name: 'John Doe',
   };
   var picturesToUpdate = {
-    pictures: {}
+    pictures: {'newPath'}
   };
   
   //Update all users and pictures data
-  var usersUpdated = usersRepository.update(usersToUpdate);
-  var picturesUpdated = picturesRepository.update(picturesToUpdate);
+  usersRepository.update(usersToUpdate);
+  picturesRepository.update(picturesToUpdate);
+  
 });
 ```
 
-### Set conditions
-##### Prototypes
+#### Delete
+##### Prototype
 ```javascript
-ngdb setBy(object conditions)
-ngdb setOrder(object conditions)
-ngdb setLimit(int from, int to)
+promise delete()
 ```
 ##### Description
-These methods must be used before call the _get(), getOne(), add(), update()_ and _delete()_ methods.
+Delete entries in the repository.
 
-They have an influence on the result you'll obtain. The arguments they take contain the informations that describe how the _get(), getOne(), add(), update()_ and _delete()_ methods will make operations.
+__Return__ promise containing an object with the informations about the deletion.
 
-* _setBy_ : take an object -> {fieldName: 'toBeEqual', ...}
-* _setOrder_ : take an object -> {fieldName: 'ASC', fieldName: 'DESC'}
-* _setLimit_ : take two integer which represent the interval
+```javascript
+myApp.controller('myCtrl', function(ngdb) {
 
-__Return__ a _ngdb_ instance.
-##### Exemple
+  var usersRepository     = ngdb.getRepository('users');
+  var picturesRepository  = ngdb.getRepository('pictures');
+  
+  //Delete all users and pictures data
+  usersRepository.delete();
+  picturesRepository.delete();
+  
+});
+```
+
+### Data selection
+These methods can be chained and must be called before the data operation methods (get, update, ...).
+These methods have an influence on the way the data are going to be treated. All of them take an object where the key correspond to the data name previously defined (in the app config step).
+
+#### Order
+##### Prototype
+```javascript
+ngdb setOrder(object order)
+```
+
+##### Description
+Order your data by something in ascendent ('ASC' keyword) or descendent ('DESC' keyword) order.
+
+__Return__ promise containing an object with the requested data.
+
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
   var usersRepository = ngdb.getRepository('users');
-  var picturesRepository = ngdb.getRepository('pictures');
+
+  //Get all users sorted by name in ascendent order
+  usersRepository.setOrder({'name': 'ASC'}).get();
+  //Get all users sorted by id in descendent order
+  usersRepository.setOrder({'id': 'DESC'}).get();
   
-  //Get an user by his ID
-  var user = usersRepository
-  .setBy({id: 5})
-  .getOne();
-  
-  //Get all users who are called 'John' and born on the specified date
-  var users = usersRepository
-  .setBy({name: 'John', born: new Date().GetTime()})
-  .get();
-  
-  //Same as before except that the results are sorted in descendent order by name
-  var users = usersRepository
-  .setBy({name: 'John', born: new Date().GetTime()})
-  .setOrder({name: 'DESC'})
-  .get();
-  
-  //Same as before except that we get only the 10 first results
-  var users = usersRepository
-  .setBy({name: 'John', born: new Date().GetTime()})
-  .setOrder({name: 'DESC'})
-  .setLimit(0, 10)
-  .get();
-  
-  /*
-  ** Obviously work with get(), getOne(), update(), ...
-  */
 });
 ```
 
-### Native SQLite syntax
+#### Standards
+##### Prototype
+```javascript
+ngdb setBy(object conditions)
+```
+
+##### Description
+Get, update or delete data according to the equality of the key-value object.
+
+__Return__ promise containing an object with the requested data.
+
+```javascript
+myApp.controller('myCtrl', function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+
+  //Get all users named 'John'
+  usersRepository.setBy({'name': 'John'}).get();
+  //Get the user with id equal to 1
+  usersRepository.setOrder({'id': 1}).getOne();
+  //Get the user named John with id equal to 1
+  usersRepository.setBy({'id': 1, 'name': 'John'}).getOne();
+  
+});
+```
+
+#### Limit
+##### Prototype
+```javascript
+ngdb setLimit(int from, int to)
+```
+Take two integer which represent the interval.
+
+__Return__ promise containing an object with the requested data.
+
+```javascript
+myApp.controller('myCtrl', function(ngdb) {
+
+  var usersRepository = ngdb.getRepository('users');
+
+  //Get 0 to 10 first results
+  usersRepository.setLimit(0, 10).get();
+  //Get 10 to 20 first results
+  usersRepository.setLimit(10, 20).get();
+  
+});
+```
+
+### Data binding
+
+_CURRENT WRITING, VERY SOON AVAILABLE_
+
+### Low level usage
+#### Native SQLite syntax
 ##### Prototypes
 ```javascript
 promise query(string query, array bindings)
@@ -331,52 +359,6 @@ myApp.controller('myCtrl', function(ngdb) {
   
   result.then(function(result) {
     result = ngdb.fetchAll(result);
-  });
-});
-```
-
-# Global example
-```javascript
-myApp.controller('myCtrl', function($scope, ngdb){
-  
-  var usersRepository = ngdb.getRepository('users');
-  
-  //Add new user
-  var userAdded = usersRepository.add({
-    name: 'John Doe',
-    born: new Date().getTime()
-  });
-  
-  userAdded.then(function(result){
-    var userId = result.insertId;
-  });
-  
-  //Get a specific user data and send them into the view (assume that we have got the user id)
-  var user = usersRepository.setBy({id: userId}).getOne();
-  
-  user.then(function(result){
-    $scope.user = result;
-  });
-  
-  //Update user (assume that the user has updated his data in the view)
-  var update = usersRepository.setBy({id: userID}).update($scope.user);
-  
-  update.then(function(result) {
-    //Do what you want
-  });
-  
-  //Delete user
-  var deleted = usersRepository.setBy({id: userID}).delete();
-  
-  update.then(function(result) {
-    //Do what you want
-  });
-  
-  //Get all users sorted by name in descendent order
-  var users = usersRepository.setOrder({name: 'DESC'}).get();
-  
-  users.then(function(result){
-    $scope.users = result;
   });
 });
 ```
