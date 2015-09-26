@@ -7,8 +7,8 @@ ngDatabase is a light, very easy to use and powerful __storage__ solution for yo
   * [Quick guide] (#quick-guide)
   * [Installation] (#installation)
 * __Repositories__
-  * [Create Repositories] (#create-repositories)
-  * [Get Repositories] (#get-repositories)
+  * [Create Repositories] (#create)
+  * [Get Repositories] (#get)
 * __Data operation__
   * [Add data] (#add)
   * [Get data] (#get)
