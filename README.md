@@ -30,13 +30,13 @@ Get started in 4 steps by following this guideline.
 
 * The very first thing you have to do is install ngDatabase : [ngDatabase installation] (#installation)
 
-* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to create repositories : [Create Repositories] (#create-repositories)
+* At this point you must launch ngDatabase inside your app and tell him what kind of 'repository' you will used. In ngDatabase a repository is a place where your data will be stored. For exemple if you have to store some user and customer data you will have two repositories severally called 'users' and 'customers'. Check how to create repositories : [Create Repositories] (#create)
 
-* Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get-repositories)
+* Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get)
 
-* The previous method give you an new instance of a working repository. Now you can make what you want thanks to the 4 following methods : [Add data] (#add-data), [Delete data] (#delete-data), [Get data] (#get-data), [Update data] (#update-data)
+* The previous method give you an new instance of a working repository. Now you can make what you want thanks to the 4 following methods : [Add data] (#add), [Get data] (#get), [Update data] (#update), [Delete data] (#delete)
 
-* As you can observe we can't do a lot only with these 4 methods. It's the combination between them and 3 others which make the magic. These 3 others are _setBy(), setOrder()_ and _setLimit()_ which define by what criterion the data will be get, add, delete, ... Check it : [Set conditions] (#set-conditions)
+* As you can observe we can't do a lot only with these 4 methods. It's the combination between them and 3 others which make the magic. These 3 others are _setBy(), setOrder()_ and _setLimit()_ which define by what criterion the data will be get, add, delete, ... Check it : [Data selection] (#data-selection)
 
 ### Installation
 #### ngCordova and cordovaSQLite
@@ -179,7 +179,6 @@ All your data are gived back to the correct type (objects as objects, numbers as
 
 __Return__ promise containing an object with the requested data.
 
-##### Exemple
 ```javascript
 myApp.controller('myCtrl', function(ngdb) {
 
