@@ -34,7 +34,7 @@ Get started in 4 steps by following this guideline.
 
 * Now you've got some repositories ready to work. Each time you make operations on your repositories you have to use the _getRepository()_ method to be able to do anything. -> [Get Repositories] (#get)
 
-* The previous method give you an new instance of a working repository. Now you can make what you want thanks to the 4 following methods : [Add data] (#add), [Get data] (#get), [Update data] (#update), [Delete data] (#delete)
+* The previous method give you an new instance of a working repository. Now you can make what you want thanks to the 4 methods : [Data operation] (#data-operation)
 
 * As you can observe we can't do a lot only with these 4 methods. It's the combination between them and 3 others which make the magic. These 3 others are _setBy(), setOrder()_ and _setLimit()_ which define by what criterion the data will be get, add, delete, ... Check it : [Data selection] (#data-selection)
 
