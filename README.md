@@ -151,7 +151,7 @@ myApp.controller('myCtrl', function(ngdb) {
   var userToAdd = {
     pictures_id:  5,
     name:         'Jack',
-    born:         new Date().getTime()
+    born:         new Date()
   };
   var pictureToAdd = {
     pictures:     {'path1', 'path2'}
@@ -357,7 +357,7 @@ myApp.controller('myCtrl', function(ngdb) {
   var result  = qm.make("SELECT * FROM users WEHRE name = ?", ['John Doe']);
   
   result.then(function(result) {
-    result = ngdb.fetchAll(result);
+    result = qm.fetchAll(result);
   });
 });
 ```
