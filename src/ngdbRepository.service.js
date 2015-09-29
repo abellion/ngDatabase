@@ -36,6 +36,12 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		return ((fetched) ? fetched : null);
 	};
 
+	var _updateCache = function(promise) {
+		promise.then(function() {
+			ngdbCache.updateCache(_repositoryName);
+		});
+	};
+
 	/*
 	** USER METHODS
 	*/
@@ -88,7 +94,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('INSERT', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		ngdbCache.updateCache(_repositoryName);
+		_updateCache(result);
 		return (this.resetBuilder(), result);
 	};
 
@@ -97,7 +103,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('UPDATE', data);
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		ngdbCache.updateCache(_repositoryName);
+		_updateCache(result);
 		return (this.resetBuilder(), result);
 	};
 
@@ -105,7 +111,7 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 		var query 	= this.buildQuery('DELETE');
 		var result 	= ngdbQuery.make(query['query'], query['binds']);
 
-		ngdbCache.updateCache(_repositoryName);
+		_updateCache(result);
 		return (this.resetBuilder(), result);
 	};
 
