@@ -18,15 +18,15 @@ function ngdbQueryBuilder(ngdbUtils) {
 	** BUILD QUERY METHODS
 	*/
 	var _buildSelectQuery = function() {
-		return ("SELECT * FROM " + _queryParams['table']);
+		return ("SELECT * FROM `" + _queryParams['table']+ "`");
 	};
 
 	var _buildUpdateQuery = function() {
 		var matching = _queryParams['data']['matching'].map(function(val) {
-			return (val + " = ?");
+			return ("`" + val + "` = ?");
 		});
 
-		return ("UPDATE " + _queryParams['table'] + " SET " + matching.join(","));
+		return ("UPDATE `" + _queryParams['table'] + "` SET " + matching.join(","));
 	};
 
 	var _buildInsertQuery = function() {
@@ -34,11 +34,11 @@ function ngdbQueryBuilder(ngdbUtils) {
 			return ("?");
 		});
 
-		return ("INSERT INTO " + _queryParams['table'] + " (" + _queryParams['data']['matching'].join(",") + ") VALUES (" + matching.join(",") + ")");
+		return ("INSERT INTO `" + _queryParams['table'] + "` (`" + _queryParams['data']['matching'].join("`, `") + "`) VALUES (" + matching.join(",") + ")");
 	};
 
 	var _buildDeleteQuery = function() {
-		return ("DELETE FROM " + _queryParams['table']);
+		return ("DELETE FROM `" + _queryParams['table'] + "`");
 	};
 
 	/*
@@ -46,7 +46,7 @@ function ngdbQueryBuilder(ngdbUtils) {
 	*/
 	var _buildWhereParam = function() {
 		var matching = _queryParams['where']['matching'].map(function(val) {
-			return (val + " = ?");
+			return ("`" + val + "` = ?");
 		});
 
 		return ("WHERE " + matching.join(" and "));

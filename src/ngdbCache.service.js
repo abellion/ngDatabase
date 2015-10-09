@@ -103,8 +103,10 @@ function ngdbCache(ngdbQuery, ngdbUtils) {
 				var newValue = bind['dataFormater'].call(null, result);
 				var oldValue = angular.copy(bind['value']);
 
-				_mergeData(bind['value'], newValue);
-				self.callWatcher(bind['value'], oldValue);
+				if (!angular.equals(newValue, oldValue)) {
+					_mergeData(bind['value'], newValue);
+					self.callWatcher(bind['value'], oldValue);
+				}
 			});
 		});
 	};

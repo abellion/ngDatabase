@@ -1,10 +1,10 @@
 angular
 	.module('ngDatabase', ['ngCordova'])
 	.constant('NGDB_TYPES', {
-		ID: 		'integer primary key',
+		ID: 		'integer',
 		STRING: 	'text',
 		NUMBER: 	'integer',
-		BOOLEAN: 	'boolean',
+		BOOLEAN: 	'text',
 		OBJECT: 	'text',
 		ARRAY: 		'text',
 		DATE: 		'datetime'
@@ -17,17 +17,23 @@ angular
 ngdbProvider.$inject = ['NGDB_TYPES'];
 function ngdbProvider(NGDB_TYPES) {
 	var self 				= this;
-	self.repositorySchema 	= {};
+	self.repositoriesSchema = {};
 
-	self.setRepository = function(repositoryName, repositorySchema) {
+	var _validRepository = function(repositorySchema) {
 		var isValid = true;
 
 		ngdbUtils().browseObject(repositorySchema, function(type, name) {
 			isValid = (NGDB_TYPES[type]) ? isValid : false;
 		});
 
-		if (isValid) {
-			self.repositorySchema[repositoryName] = repositorySchema;
+		return (isValid)
+	};
+
+	self.setRepository = function(repositoryName, repositorySchema) {
+		if (_validRepository(repositorySchema)) {
+			repositorySchema['id'] = 'ID';
+
+			self.repositoriesSchema[repositoryName] = repositorySchema;
 		}
 		else {
 			ngdbUtils().errorHandler("Unable to create '"+repositoryName+"' due to unknown datatype.");
@@ -49,33 +55,45 @@ function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, ngdbCache, NGDB_TYPES)
 	/*
 	** REPOSITORIES
 	*/
+	var _formatRepository = function(repositorySchema) {
+		var ret = {};
+
+        ngdbUtils.browseObject(repositorySchema, function(columnType, columnName) {
+        	ret[columnName] = (columnName !== "id") ? NGDB_TYPES[columnType] : 'integer primary key';
+        });
+
+		return (ret);
+	};
+
 	ngdb.createRepositories = function() {
 		var queries = [];
-		var schema 	= self.repositorySchema;
+		var schema 	= self.repositoriesSchema;
 
 		ngdbUtils.browseObject(schema, function(table, tableName) {
 			var columns = [];
+			table 		= _formatRepository(table);
 
             ngdbUtils.browseObject(table, function(columnType, columnName) {
-                columns.push(columnName + ' ' + NGDB_TYPES[columnType]);
+                columns.push('`' + columnName + '` ' + columnType);
             });
-            queries.push(ngdbQuery.make('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
+
+            queries.push(ngdbQuery.make('CREATE TABLE IF NOT EXISTS `' + tableName + '` (' + columns.join(', ') + ')'));
 		});
 
 		return ($q.all(queries));
 	};
 
-	ngdb.getRepository = function(repositoryName) {
+	ngdb.getRepository = function(repositoryName, binding) {
 		var repository 			= $injector.instantiate(ngdbRepository, { 'ngdbQueryBuilder': $injector.instantiate(ngdbQueryBuilder) });
-		var repositorySchema 	= self.repositorySchema[repositoryName];
+		var repositorySchema 	= ngdb.getRepositorySchema(repositoryName);
 
-		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema);
+		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema, binding);
 
 		return (repository);
 	};
 
 	ngdb.getRepositorySchema = function(repositoryName) {
-		return (self.repositorySchema[repositoryName] || null);
+		return (self.repositoriesSchema[repositoryName] || null);
 	};
 
 	ngdb.getQueryMaker = function() {
@@ -159,15 +177,17 @@ angular
 ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbCache', 'ngdbDataConverter'];
 function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbCache, ngdbDataConverter) {
 	var self 				= this;
+	var _binding 			= true;
 	var _repositoryName 	= null;
 	var _repositorySchema 	= null;
 
 	/*
 	** UTILS METHODS
 	*/
-	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
+	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema, binding) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;
+		_binding 			= (binding === false) ? false : true;
 
 		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
@@ -191,6 +211,10 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 	};
 
 	var _updateCache = function(promise) {
+		if (!_binding) {
+			return (0);
+		}
+
 		promise.then(function() {
 			ngdbCache.updateCache(_repositoryName);
 		});
@@ -378,8 +402,10 @@ function ngdbCache(ngdbQuery, ngdbUtils) {
 				var newValue = bind['dataFormater'].call(null, result);
 				var oldValue = angular.copy(bind['value']);
 
-				_mergeData(bind['value'], newValue);
-				self.callWatcher(bind['value'], oldValue);
+				if (!angular.equals(newValue, oldValue)) {
+					_mergeData(bind['value'], newValue);
+					self.callWatcher(bind['value'], oldValue);
+				}
 			});
 		});
 	};
@@ -461,28 +487,31 @@ function ngdbDataConverter(ngdbUtils) {
 	};
 
 	var _convertObjectToAdd = function(val) {
-		return (angular.isObject(val) &&  angular.toJson(val) || null);
+		return (angular.isObject(val) && Object.keys(val).length && angular.toJson(val) || undefined);
+	};
+	var _convertArrayToAdd = function(val) {
+		return (angular.isObject(val) && val.length && angular.toJson(val) || undefined);
 	};
 	var _convertObjectToGet = function(val) {
-		return (_isJson(val) || null);
+		return (_isJson(val) || undefined);
 	};
 
 	var _convertDateToAdd = function(val) {
-		return (val instanceof Date && val.getTime() || null);
+		return (val instanceof Date && val.getTime() || undefined);
 	};
 	var _convertDateToGet = function(val) {
-		return (isFinite(val) && new Date(val) || null);
+		return (isFinite(val) && new Date(val) || undefined);
 	};
 
 	var _convertNumberToAdd = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || null);
+		return (isFinite(val) && parseInt(val, 10) || undefined);
 	};
 	var _convertNumberToGet = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || null);
+		return (isFinite(val) && parseInt(val, 10) || undefined);
 	};
 
 	var _convertBoolToAdd = function(val) {
-		return ((val === true) ? true : false);
+		return ((val === true || val === false) ? val.toString() : undefined);
 	};
 	var _convertBoolToGet = function(val) {
 		return ((val === "true") ? true : false);
@@ -491,7 +520,7 @@ function ngdbDataConverter(ngdbUtils) {
 	var _convertDataToAdd = function(data, dataType) {
 		var converter = {
 			'OBJECT': 	_convertObjectToAdd,
-			'ARRAY': 	_convertObjectToAdd,
+			'ARRAY': 	_convertArrayToAdd,
 			'DATE': 	_convertDateToAdd,
 			'BOOLEAN': 	_convertBoolToAdd,
 			'NUMBER': 	_convertNumberToAdd
@@ -515,7 +544,11 @@ function ngdbDataConverter(ngdbUtils) {
 
 		ngdbUtils.browseObject(data, function(fieldValue, fieldName) {
 			if (repositorySchema && repositorySchema[fieldName]) {
-				formated[fieldName] = fun(fieldValue, repositorySchema[fieldName]);
+				var ret = fun(fieldValue, repositorySchema[fieldName]);
+
+				if (ret !== undefined) {
+					formated[fieldName] = ret;
+				}
 			}
 		});
 
@@ -555,15 +588,15 @@ function ngdbQueryBuilder(ngdbUtils) {
 	** BUILD QUERY METHODS
 	*/
 	var _buildSelectQuery = function() {
-		return ("SELECT * FROM " + _queryParams['table']);
+		return ("SELECT * FROM `" + _queryParams['table']+ "`");
 	};
 
 	var _buildUpdateQuery = function() {
 		var matching = _queryParams['data']['matching'].map(function(val) {
-			return (val + " = ?");
+			return ("`" + val + "` = ?");
 		});
 
-		return ("UPDATE " + _queryParams['table'] + " SET " + matching.join(","));
+		return ("UPDATE `" + _queryParams['table'] + "` SET " + matching.join(","));
 	};
 
 	var _buildInsertQuery = function() {
@@ -571,11 +604,11 @@ function ngdbQueryBuilder(ngdbUtils) {
 			return ("?");
 		});
 
-		return ("INSERT INTO " + _queryParams['table'] + " (" + _queryParams['data']['matching'].join(",") + ") VALUES (" + matching.join(",") + ")");
+		return ("INSERT INTO `" + _queryParams['table'] + "` (`" + _queryParams['data']['matching'].join("`, `") + "`) VALUES (" + matching.join(",") + ")");
 	};
 
 	var _buildDeleteQuery = function() {
-		return ("DELETE FROM " + _queryParams['table']);
+		return ("DELETE FROM `" + _queryParams['table'] + "`");
 	};
 
 	/*
@@ -583,7 +616,7 @@ function ngdbQueryBuilder(ngdbUtils) {
 	*/
 	var _buildWhereParam = function() {
 		var matching = _queryParams['where']['matching'].map(function(val) {
-			return (val + " = ?");
+			return ("`" + val + "` = ?");
 		});
 
 		return ("WHERE " + matching.join(" and "));

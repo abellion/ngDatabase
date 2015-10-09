@@ -5,15 +5,17 @@ angular
 ngdbRepository.$inject = ['$q', '$injector', 'ngdbUtils', 'ngdbQuery', 'ngdbQueryBuilder', 'ngdbCache', 'ngdbDataConverter'];
 function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, ngdbCache, ngdbDataConverter) {
 	var self 				= this;
+	var _binding 			= true;
 	var _repositoryName 	= null;
 	var _repositorySchema 	= null;
 
 	/*
 	** UTILS METHODS
 	*/
-	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema) {
+	self.ngdbRepositorySetRepository = function(repositoryName, repositorySchema, binding) {
 		_repositoryName 	= repositoryName;
 		_repositorySchema 	= repositorySchema;
+		_binding 			= (binding === false) ? false : true;
 
 		ngdbQueryBuilder.ngdbQueryBuilderSetRepository(repositoryName);
 
@@ -37,6 +39,10 @@ function ngdbRepository($q, $injector, ngdbUtils, ngdbQuery, ngdbQueryBuilder, n
 	};
 
 	var _updateCache = function(promise) {
+		if (!_binding) {
+			return (0);
+		}
+
 		promise.then(function() {
 			ngdbCache.updateCache(_repositoryName);
 		});

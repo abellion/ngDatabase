@@ -22,28 +22,31 @@ function ngdbDataConverter(ngdbUtils) {
 	};
 
 	var _convertObjectToAdd = function(val) {
-		return (angular.isObject(val) &&  angular.toJson(val) || null);
+		return (angular.isObject(val) && Object.keys(val).length && angular.toJson(val) || undefined);
+	};
+	var _convertArrayToAdd = function(val) {
+		return (angular.isObject(val) && val.length && angular.toJson(val) || undefined);
 	};
 	var _convertObjectToGet = function(val) {
-		return (_isJson(val) || null);
+		return (_isJson(val) || undefined);
 	};
 
 	var _convertDateToAdd = function(val) {
-		return (val instanceof Date && val.getTime() || null);
+		return (val instanceof Date && val.getTime() || undefined);
 	};
 	var _convertDateToGet = function(val) {
-		return (isFinite(val) && new Date(val) || null);
+		return (isFinite(val) && new Date(val) || undefined);
 	};
 
 	var _convertNumberToAdd = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || null);
+		return (isFinite(val) && parseInt(val, 10) || undefined);
 	};
 	var _convertNumberToGet = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || null);
+		return (isFinite(val) && parseInt(val, 10) || undefined);
 	};
 
 	var _convertBoolToAdd = function(val) {
-		return ((val === true) ? true : false);
+		return ((val === true || val === false) ? val.toString() : undefined);
 	};
 	var _convertBoolToGet = function(val) {
 		return ((val === "true") ? true : false);
@@ -52,7 +55,7 @@ function ngdbDataConverter(ngdbUtils) {
 	var _convertDataToAdd = function(data, dataType) {
 		var converter = {
 			'OBJECT': 	_convertObjectToAdd,
-			'ARRAY': 	_convertObjectToAdd,
+			'ARRAY': 	_convertArrayToAdd,
 			'DATE': 	_convertDateToAdd,
 			'BOOLEAN': 	_convertBoolToAdd,
 			'NUMBER': 	_convertNumberToAdd
@@ -76,7 +79,11 @@ function ngdbDataConverter(ngdbUtils) {
 
 		ngdbUtils.browseObject(data, function(fieldValue, fieldName) {
 			if (repositorySchema && repositorySchema[fieldName]) {
-				formated[fieldName] = fun(fieldValue, repositorySchema[fieldName]);
+				var ret = fun(fieldValue, repositorySchema[fieldName]);
+
+				if (ret !== undefined) {
+					formated[fieldName] = ret;
+				}
 			}
 		});
 

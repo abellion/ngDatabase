@@ -1,10 +1,10 @@
 angular
 	.module('ngDatabase', ['ngCordova'])
 	.constant('NGDB_TYPES', {
-		ID: 		'integer primary key',
+		ID: 		'integer',
 		STRING: 	'text',
 		NUMBER: 	'integer',
-		BOOLEAN: 	'boolean',
+		BOOLEAN: 	'text',
 		OBJECT: 	'text',
 		ARRAY: 		'text',
 		DATE: 		'datetime'
@@ -17,17 +17,23 @@ angular
 ngdbProvider.$inject = ['NGDB_TYPES'];
 function ngdbProvider(NGDB_TYPES) {
 	var self 				= this;
-	self.repositorySchema 	= {};
+	self.repositoriesSchema = {};
 
-	self.setRepository = function(repositoryName, repositorySchema) {
+	var _validRepository = function(repositorySchema) {
 		var isValid = true;
 
 		ngdbUtils().browseObject(repositorySchema, function(type, name) {
 			isValid = (NGDB_TYPES[type]) ? isValid : false;
 		});
 
-		if (isValid) {
-			self.repositorySchema[repositoryName] = repositorySchema;
+		return (isValid)
+	};
+
+	self.setRepository = function(repositoryName, repositorySchema) {
+		if (_validRepository(repositorySchema)) {
+			repositorySchema['id'] = 'ID';
+
+			self.repositoriesSchema[repositoryName] = repositorySchema;
 		}
 		else {
 			ngdbUtils().errorHandler("Unable to create '"+repositoryName+"' due to unknown datatype.");
@@ -49,33 +55,45 @@ function ngdbFactory($q, $injector, ngdbUtils, ngdbQuery, ngdbCache, NGDB_TYPES)
 	/*
 	** REPOSITORIES
 	*/
+	var _formatRepository = function(repositorySchema) {
+		var ret = {};
+
+        ngdbUtils.browseObject(repositorySchema, function(columnType, columnName) {
+        	ret[columnName] = (columnName !== "id") ? NGDB_TYPES[columnType] : 'integer primary key';
+        });
+
+		return (ret);
+	};
+
 	ngdb.createRepositories = function() {
 		var queries = [];
-		var schema 	= self.repositorySchema;
+		var schema 	= self.repositoriesSchema;
 
 		ngdbUtils.browseObject(schema, function(table, tableName) {
 			var columns = [];
+			table 		= _formatRepository(table);
 
             ngdbUtils.browseObject(table, function(columnType, columnName) {
-                columns.push(columnName + ' ' + NGDB_TYPES[columnType]);
+                columns.push('`' + columnName + '` ' + columnType);
             });
-            queries.push(ngdbQuery.make('CREATE TABLE IF NOT EXISTS ' + tableName + ' (' + columns.join(', ') + ')'));
+
+            queries.push(ngdbQuery.make('CREATE TABLE IF NOT EXISTS `' + tableName + '` (' + columns.join(', ') + ')'));
 		});
 
 		return ($q.all(queries));
 	};
 
-	ngdb.getRepository = function(repositoryName) {
+	ngdb.getRepository = function(repositoryName, binding) {
 		var repository 			= $injector.instantiate(ngdbRepository, { 'ngdbQueryBuilder': $injector.instantiate(ngdbQueryBuilder) });
-		var repositorySchema 	= self.repositorySchema[repositoryName];
+		var repositorySchema 	= ngdb.getRepositorySchema(repositoryName);
 
-		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema);
+		repository.ngdbRepositorySetRepository(repositoryName, repositorySchema, binding);
 
 		return (repository);
 	};
 
 	ngdb.getRepositorySchema = function(repositoryName) {
-		return (self.repositorySchema[repositoryName] || null);
+		return (self.repositoriesSchema[repositoryName] || null);
 	};
 
 	ngdb.getQueryMaker = function() {
