@@ -39,10 +39,14 @@ function ngdbDataConverter(ngdbUtils) {
 	};
 
 	var _convertNumberToAdd = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || undefined);
+		var isNumber = (!isNaN(parseFloat(val)) && isFinite(val) || undefined);
+
+		return ((isNumber) ? parseInt(val, 10) : undefined);
 	};
 	var _convertNumberToGet = function(val) {
-		return (isFinite(val) && parseInt(val, 10) || undefined);
+		var isNumber = (!isNaN(parseFloat(val)) && isFinite(val) || undefined);
+
+		return ((isNumber) ? parseInt(val, 10) : undefined);
 	};
 
 	var _convertBoolToAdd = function(val) {
