@@ -2,7 +2,7 @@
   "name": "ng-database",
   "version": "1.3.5",
   "description": "A simple and powerful local storage solution for your Ionic apps.",
-  "main": "ngdb.js",
+  "main": "dist/ngdb.js",
   "keywords": [
     "ionic",
     "sqlite",
