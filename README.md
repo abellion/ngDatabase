@@ -1,3 +1,9 @@
+# Depreciation notice : this repository is no longer maintained.
+You can find other good lib such as :
+- localForage : https://github.com/localForage/localForage
+- angular localForage : https://github.com/ocombe/angular-localForage
+- pouch db : https://pouchdb.com/ (with sync capatibilities)
+
 # ngDatabase
 ngDatabase is a light, very easy to use and powerful __storage__ solution for your __[Ionic](http://ionicframework.com/)__ apps. Take advantage of unlimited storage size, data binding, very flexible data management and more.  
 
